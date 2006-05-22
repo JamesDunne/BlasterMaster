@@ -22,6 +22,7 @@
 #include "common.h"
 #include "newmap.h"
 
+unsigned long	scrolloffsets[16];
 unsigned long	leveloffsets[16 * 4];
 unsigned long	levelsizes[16 * 4];
 unsigned long	etyoffsets[16];
@@ -29,6 +30,7 @@ unsigned long	numetys;
 unsigned char	*etyclass, *etyx, *etyy;
 unsigned long	paletteofs[16], colormapofs[16];
 unsigned char	mappalette[16];
+unsigned char	scrollv[8], scrollh[8];
 unsigned char	*map2x2;
 unsigned char	*map4x4;
 unsigned char	*map8x8;
@@ -91,6 +93,11 @@ void ReadLevel(int l, int n)
 	fseek(nesrom, leveloffsets[(l<<2)+3], SEEK_SET);
 	map32x32 = calloc(levelsizes[(l<<2)+3], 1);
 	fread(map32x32, 1, levelsizes[(l<<2)+3], nesrom);
+
+	// Read scroll table for the level:
+	fseek(nesrom, scrolloffsets[l], SEEK_SET);
+	fread(scrollv, 1, 8, nesrom);
+	fread(scrollh, 1, 8, nesrom);
 
 	map.width = 128;
 	map.height = (levelsizes[(l<<2)+3] >> 5) << 2;
@@ -205,15 +212,15 @@ int LoadROM(char *fname) {
 	fseek(nesrom, 0x10, SEEK_SET);
 	// Subtract 0x8000 (for PRG memory) from the offset and then add 0x10 (for NES header)
 	leveloffsets[0<<2] = (ReadUInt16() - 0x8000) + 0x0010;
-	ReadUInt16();					// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[0] = (ReadUInt16() - 0x8000) + 0x0010;
 	leveloffsets[1<<2] = (ReadUInt16() - 0x8000) + 0x0010;
-	ReadUInt16();					// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[1] = (ReadUInt16() - 0x8000) + 0x0010;
 	leveloffsets[2<<2] = (ReadUInt16() - 0x8000) + 0x0010;
-	ReadUInt16();					// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[2] = (ReadUInt16() - 0x8000) + 0x0010;
 	leveloffsets[3<<2] = (ReadUInt16() - 0x8000) + 0x0010;
-	ReadUInt16();					// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[3] = (ReadUInt16() - 0x8000) + 0x0010;
 	leveloffsets[4<<2] = (ReadUInt16() - 0x8000) + 0x0010;
-	ReadUInt16();					// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[4] = (ReadUInt16() - 0x8000) + 0x0010;
 
 	for (i=0; i<5; ++i) {
 		fseek(nesrom, leveloffsets[i<<2], SEEK_SET);
@@ -234,15 +241,15 @@ int LoadROM(char *fname) {
 	fseek(nesrom, 0x4010, SEEK_SET);
 	// Subtract 0x8000 (for PRG memory) from the offset and then add 0x4010 (for NES header)
 	leveloffsets[5<<2] = (ReadUInt16() - 0x8000) + 0x4010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[5] = (ReadUInt16() - 0x8000) + 0x4010;
 	leveloffsets[6<<2] = (ReadUInt16() - 0x8000) + 0x4010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[6] = (ReadUInt16() - 0x8000) + 0x4010;
 	leveloffsets[7<<2] = (ReadUInt16() - 0x8000) + 0x4010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[7] = (ReadUInt16() - 0x8000) + 0x4010;
 	leveloffsets[8<<2] = (ReadUInt16() - 0x8000) + 0x4010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[8] = (ReadUInt16() - 0x8000) + 0x4010;
 	leveloffsets[9<<2] = (ReadUInt16() - 0x8000) + 0x4010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[9] = (ReadUInt16() - 0x8000) + 0x4010;
 
 	for (i=5; i<10; ++i)
 	{
@@ -264,17 +271,17 @@ int LoadROM(char *fname) {
 	fseek(nesrom, 0x8010, SEEK_SET);
 	// Subtract 0x8000 (for PRG memory) from the offset and then add 0x4010 (for NES header)
 	leveloffsets[10<<2] = (ReadUInt16() - 0x8000) + 0x8010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[10] = (ReadUInt16() - 0x8000) + 0x8010;
 	leveloffsets[11<<2] = (ReadUInt16() - 0x8000) + 0x8010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[11] = (ReadUInt16() - 0x8000) + 0x8010;
 	leveloffsets[12<<2] = (ReadUInt16() - 0x8000) + 0x8010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[12] = (ReadUInt16() - 0x8000) + 0x8010;
 	leveloffsets[13<<2] = (ReadUInt16() - 0x8000) + 0x8010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[13] = (ReadUInt16() - 0x8000) + 0x8010;
 	leveloffsets[14<<2] = (ReadUInt16() - 0x8000) + 0x8010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[14] = (ReadUInt16() - 0x8000) + 0x8010;
 	leveloffsets[15<<2] = (ReadUInt16() - 0x8000) + 0x8010;
-	ReadUInt16();			// Skip 2 bytes (not sure what it's for exactly)
+	scrolloffsets[15] = (ReadUInt16() - 0x8000) + 0x8010;
 
 	for (i=10; i<16; ++i)
 	{
@@ -395,9 +402,6 @@ void ConvertMap(int l, int n, int numtex) {
 	map.doors_loaded = 1;
 	map.doors = realloc(map.doors, sizeof(mapdoor_t *) * map.num_doors);
 
-	unsigned char	ltag[16];
-	for (i = 0; i < 16; ++i) ltag[i] = 0;
-
 	m = 0;
 	for (i = 0; i < gatewaycount; ++i) {
 		int	lc = ((l + 8) % 16);
@@ -430,6 +434,43 @@ void ConvertMap(int l, int n, int numtex) {
 			++m;
 		}
 	}
+
+	// Create the scroll region map:
+	printf("\n");
+	for (y = 0; y < 8; ++y) {
+		for (x = 7; x >= 0; --x) {
+			printf("+");
+			if (scrollv[y] & (1 << x)) {
+				printf("---");
+			} else {
+				printf("   ");
+			}
+		}
+		printf("+\n");
+		for (i = 0; i < 3; ++i) {
+			for (x = 7; x >= 0; --x) {
+				if (scrollh[y] & (1 << x))
+					printf("|");
+				else
+					printf(" ");
+				printf("   ");
+			}
+			if (scrollh[y] & (1 << 7))
+				printf("|");
+			else
+				printf(" ");
+			printf("\n");
+		}
+	}
+	for (x = 7; x >= 0; --x) {
+		printf("+");
+		if (scrollv[0] & (1 << x)) {
+			printf("---");
+		} else {
+			printf("   ");
+		}
+	}
+	printf("+\n");
 
 	// Store all entities:
 	if (l == 0) extra = 1; else extra = 0;
