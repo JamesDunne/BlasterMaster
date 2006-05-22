@@ -271,6 +271,22 @@ void ConvertMap(int l, int n, int numtex) {
 		}
 	}
 
+	// Exceptions for oddly-shaped levels with unused space:
+	if (n == 8) {
+		for (tmpy = 0; tmpy <= 7; ++tmpy)
+			for (tmpx = 6; tmpx <= 7; ++tmpx)
+				used[tmpy][tmpx] = -1;
+		for (tmpy = 6; tmpy <= 7; ++tmpy)
+			for (tmpx = 0; tmpx <= 5; ++tmpx)
+				used[tmpy][tmpx] = -1;
+	} else if (n == 10) {
+		for (tmpy = 0; tmpy <= 7; ++tmpy)
+			used[tmpy][7] = -1;
+		for (tmpy = 6; tmpy <= 7; ++tmpy)
+			for (tmpx = 4; tmpx <= 6; ++tmpx)
+				used[tmpy][tmpx] = -1;
+	}
+
 	for (;;) {
 		// Find a starting room:
 		for (sy = 0; sy < 8; ++sy) {
