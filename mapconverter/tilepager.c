@@ -650,15 +650,41 @@ void ConvertMap(int l, int n, int numtex) {
 	}
 	map.doors = realloc(map.doors, sizeof(mapdoor_t *) * map.num_doors);
 
+	unsigned char	ltag[16];
+	for (i = 0; i < 16; ++i) ltag[i] = 0;
+
 	m = 0;
 	for (i = 0; i < gatewaycount; ++i) {
-		if (gateways[i].levela == ((l + 8) % 16)) {
+		int	lc = ((l + 8) % 16);
+		if (gateways[i].levela == lc) {
+			int	lb = ((gateways[i].levelb + 8) % 16);
 			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
-			map.doors[m]->tag = 0x20 + m;
+			map.doors[m]->x = gateways[i].xa;
+			map.doors[m]->y = gateways[i].ya;
+			if (l < 8) { map.doors[m]->x -= 2; map.doors[m]->y -= 2; }
+			map.doors[m]->tag = i+1;
+			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
+			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
+			if (lb < 10)
+				map.doors[m]->targetmap[9] = lb + '0';
+			else
+				map.doors[m]->targetmap[9] = lb - 10 + 'A';
 			++m;
 		}
-		if (gateways[i].levelb == ((l + 8) % 16)) {
-			
+		if (gateways[i].levelb == lc) {
+			int	la = ((gateways[i].levela + 8) % 16);
+			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
+			map.doors[m]->x = gateways[i].xb;
+			map.doors[m]->y = gateways[i].yb;
+			if (l < 8) { map.doors[m]->x -= 2; map.doors[m]->y -= 2; }
+			map.doors[m]->tag = i+1;
+			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
+			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
+			if (la < 10)
+				map.doors[m]->targetmap[9] = la + '0';
+			else
+				map.doors[m]->targetmap[9] = la - 10 + 'A';
+			++m;
 		}
 	}
 
