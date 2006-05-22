@@ -14,6 +14,11 @@ typedef struct mapdoor_t {
 	Uint32	tag;					// Tag/group of the door (matches tag for door in other level)
 } mapdoor_t;
 
+// A scroll region:
+typedef struct mapregion_t {
+	Uint16	lx, ty, rx, by;
+} mapregion_t;
+
 // An entity placeholder.
 typedef struct mapentity_t {
 	Uint32	class;					// Class # of the entity to spawn here
@@ -34,9 +39,10 @@ typedef struct map_t {
     Uint8	*mapflags;
     Uint8	*map;
 
-	Uint32	num_doors, num_entities;
+	Uint32	num_doors, num_entities, num_regions;
 	mapdoor_t		**doors;
 	mapentity_t		**entities;
+	mapregion_t		**regions;
 
     Uint8	texturefile_loaded;
     Uint8	mapflags_loaded;
@@ -44,6 +50,7 @@ typedef struct map_t {
     Uint8	map_loaded;
     Uint8	entities_loaded;
     Uint8	doors_loaded;
+	Uint8	regions_loaded;
 
 	fixed	friction, gravity;
 } map_t;
@@ -58,6 +65,7 @@ typedef enum {
 	MAPCHUNK_MAPDATA	=	DEFNCHNK('M', 'A', 'P', 'D'),
 	MAPCHUNK_MAPENTS	=	DEFNCHNK('E', 'N', 'T', 'S'),
 	MAPCHUNK_MAPDOORS	=	DEFNCHNK('D', 'O', 'O', 'R'),
+	MAPCHUNK_MAPREGIONS	=	DEFNCHNK('R', 'G', 'N', 'S'),
 	MAPCHUNK_MAPMUSIC	=	DEFNCHNK('M', 'U', 'S', 'C'),
 	MAPCHUNK_GAMEDLL	=	DEFNCHNK('G', 'A', 'M', 'E'),
 	MAPCHUNK_END		=	DEFNCHNK('E', 'N', 'D', 0)

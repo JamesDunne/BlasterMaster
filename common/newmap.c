@@ -164,6 +164,19 @@ int LoadMap(const char *filename) {
 				}
 				map.doors_loaded = 1;
 				break;
+			case MAPCHUNK_MAPREGIONS:
+				// Load the scroll regions:
+				map.num_regions = ReadUint32(mapfile);
+				map.regions = calloc(sizeof(mapregion_t *), map.num_regions);
+				for (i=0; i<map.num_regions; ++i) {
+					map.regions[i] = calloc(sizeof(mapregion_t), 1);
+					map.regions[i]->lx = ReadUint16(mapfile);
+					map.regions[i]->ty = ReadUint16(mapfile);
+					map.regions[i]->rx = ReadUint16(mapfile);
+					map.regions[i]->by = ReadUint16(mapfile);
+				}
+				map.regions_loaded = 1;
+				break;
 			case MAPCHUNK_MAPMUSIC:
 				// Read the filename, and use the chunksize as the length:
 				map.music_filename = calloc(chunksize+1, 1);
@@ -344,11 +357,30 @@ int SaveMap(const char *filename) {
 		}
 	}
 
+	// -------------------------------------
+
+	if (map.num_regions > 0) {
+		// Write the map's scroll regions:
+		WRITE_CHUNK(MAPCHUNK_MAPREGIONS, (8 * map.num_regions) + 4)
+
+		WriteUint32(mapfile, map.num_regions);
+		for (i=0; i<map.num_regions; ++i) {
+			WriteUint16(mapfile, map.regions[i]->lx);
+			WriteUint16(mapfile, map.regions[i]->ty);
+			WriteUint16(mapfile, map.regions[i]->rx);
+			WriteUint16(mapfile, map.regions[i]->by);
+		}
+	}
+
+	// -------------------------------------
+
 	// Write the map's music filename:
 	if (map.music_filename != NULL) {
 		WRITE_CHUNK(MAPCHUNK_MAPMUSIC, strlen(map.music_filename))
 		fwrite(map.music_filename, 1, strlen(map.music_filename), mapfile);
 	}
+
+	// -------------------------------------
 
 	// Write the map's game dll filename:
 	if (map.game_filename != NULL) {
@@ -356,7 +388,9 @@ int SaveMap(const char *filename) {
 		fwrite(map.game_filename, 1, strlen(map.game_filename), mapfile);
 	}
 
-	// Create a chunk:
+	// -------------------------------------
+
+	// Create an end chunk:
 	WRITE_CHUNK(MAPCHUNK_END, 0)
 
 	// We're done, close the file:
