@@ -654,7 +654,7 @@ void ConvertMap(int l, int n, int numtex) {
 	for (i = 0; i < gatewaycount; ++i) {
 		if (gateways[i].levela == ((l + 8) % 16)) {
 			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
-			map.doors[m]->tag = 
+			map.doors[m]->tag = 0x20 + m;
 			++m;
 		}
 		if (gateways[i].levelb == ((l + 8) % 16)) {

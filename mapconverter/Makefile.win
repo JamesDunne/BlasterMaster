@@ -7,12 +7,12 @@ WINDRES = windres.exe
 RES  = 
 OBJ  = tilepager.o ../common/newmap.o $(RES)
 LINKOBJ  = tilepager.o ../common/newmap.o $(RES)
-LIBS =  -L"C:/Dev-Cpp/lib" -lmingw32 -lSDLmain -lSDL -lpng -lz  
-INCS =  -I"C:/Dev-Cpp/include"  -I"../common" 
-CXXINCS =  -I"C:/Dev-Cpp/include/c++/3.3.1"  -I"C:/Dev-Cpp/include/c++/3.3.1/mingw32"  -I"C:/Dev-Cpp/include/c++/3.3.1/backward"  -I"C:/Dev-Cpp/lib/gcc-lib/mingw32/3.3.1/include"  -I"C:/Dev-Cpp/include"  -I"../common" 
+LIBS = -lmingw32 -lSDLmain -lSDL -lpng -lz  
+INCS = -I"../common" 
+CXXINCS = -I"../common" 
 BIN  = "../Map Extractor.exe"
-CXXFLAGS = $(CXXINCS)   -fexpensive-optimizations
-CFLAGS = $(INCS) -Dmain=SDL_main   -fexpensive-optimizations
+CXXFLAGS = $(CXXINCS) -fexpensive-optimizations
+CFLAGS = $(INCS) -Dmain=SDL_main -fexpensive-optimizations -g
 
 .PHONY: all all-before all-after clean clean-custom
 
