@@ -322,6 +322,159 @@ int LoadROM(char *fname) {
 	return 0;
 }
 
+// Map stuff:
+
+void Uncompress2x2(Uint8 *tmap, int tx, int ty, Uint8 t) {
+	tmap[(ty << 7) | tx] = t;
+}
+
+void Uncompress4x4(Uint8 *tmap, int tx, int ty, Uint8 t) {
+	Uncompress2x2(tmap, tx  , ty  , map4x4[(t << 2)+0]);
+	Uncompress2x2(tmap, tx+1, ty  , map4x4[(t << 2)+1]);
+	Uncompress2x2(tmap, tx  , ty+1, map4x4[(t << 2)+2]);
+	Uncompress2x2(tmap, tx+1, ty+1, map4x4[(t << 2)+3]);
+};
+
+void Uncompress8x8(Uint8 *tmap, int tx, int ty, Uint8 t) {
+	Uncompress4x4(tmap, tx  , ty  , map8x8[(t << 2)+0]);
+	Uncompress4x4(tmap, tx+2, ty  , map8x8[(t << 2)+1]);
+	Uncompress4x4(tmap, tx  , ty+2, map8x8[(t << 2)+2]);
+	Uncompress4x4(tmap, tx+2, ty+2, map8x8[(t << 2)+3]);
+};
+
+// Converts map from NES ROM into our native map format:
+void ConvertMap(int l, int n, int numtex) {
+	char	tempf[256];
+	int		i, m, x, y, total_tag, extra;
+
+	// Assign texture filenames:
+	map.numtextures = numtex;
+	map.texturefile = (char **) calloc(sizeof(char *) * numtex, 1);
+	map.texturefile_loaded = 1;
+
+	for (i=0; i<map.numtextures; ++i) {
+		sprintf(tempf, "textures/bgtile%X%X.png", l, i);
+		map.texturefile[i] = (char *) calloc(strlen(tempf) + 1, 1);
+		strcpy(map.texturefile[i], tempf);
+	}
+
+	// Directly copy the map2x2 data:
+	map.map2x2_size = levelsizes[(l<<2)+0] >> 2;
+	map.map2x2 = (Uint8 *) calloc(levelsizes[(l<<2)+0], 1);
+	map.map2x2_loaded = 1;
+	memcpy(map.map2x2, map2x2, levelsizes[(l<<2)+0]);
+	for (i=0; i<map.map2x2_size; ++i) {
+		//map.map2x2[i] = ((map.map2x2[i] & 0x0F) << 4) | ((map.map2x2[i] >> 4) & 0x0F);
+	}
+
+	// Directly copy the mapflags data:
+	map.mapflags = (Uint8 *) calloc(map.map2x2_size * sizeof(Uint8), 1);
+	memcpy(map.mapflags, mapflags, map.map2x2_size * sizeof(Uint8));
+	map.mapflags_loaded = 1;
+
+	map.map = calloc(sizeof(Uint8) * map.width * map.height, 1);
+	map.map_loaded = 1;
+
+	// Draw the map out from the "compressed" data:
+	for (y=0;y<map.height >> 2;++y) {
+		for (x=0;x<map.width >> 2;++x) {
+			Uncompress8x8(map.map, x << 2, y << 2, map32x32[(y << 5) | x]);
+		}
+	}
+
+	// First get a count of gateways for this level:
+	map.num_doors = 0;
+	for (i = 0; i < gatewaycount; ++i) {
+		if (gateways[i].levela == ((l + 8) % 16)) {
+			++map.num_doors;
+		}
+		if (gateways[i].levelb == ((l + 8) % 16)) {
+			++map.num_doors;
+		}
+	}
+	map.doors_loaded = 1;
+	map.doors = realloc(map.doors, sizeof(mapdoor_t *) * map.num_doors);
+
+	unsigned char	ltag[16];
+	for (i = 0; i < 16; ++i) ltag[i] = 0;
+
+	m = 0;
+	for (i = 0; i < gatewaycount; ++i) {
+		int	lc = ((l + 8) % 16);
+		if (gateways[i].levela == lc) {
+			int	lb = ((gateways[i].levelb + 8) % 16);
+			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
+			map.doors[m]->x = gateways[i].xa;
+			map.doors[m]->y = gateways[i].ya;
+			map.doors[m]->tag = i+1;
+			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
+			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
+			if (lb < 10)
+				map.doors[m]->targetmap[9] = lb + '0';
+			else
+				map.doors[m]->targetmap[9] = lb - 10 + 'A';
+			++m;
+		}
+		if (gateways[i].levelb == lc) {
+			int	la = ((gateways[i].levela + 8) % 16);
+			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
+			map.doors[m]->x = gateways[i].xb;
+			map.doors[m]->y = gateways[i].yb;
+			map.doors[m]->tag = i+1;
+			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
+			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
+			if (la < 10)
+				map.doors[m]->targetmap[9] = la + '0';
+			else
+				map.doors[m]->targetmap[9] = la - 10 + 'A';
+			++m;
+		}
+	}
+
+	// Store all entities:
+	if (l == 0) extra = 1; else extra = 0;
+	map.num_entities = numetys + extra;
+
+	map.entities_loaded = 1;
+	map.entities = calloc(sizeof(mapentity_t *) * (numetys + extra), 1);
+
+	// Add the tank for level 0 only:
+	if (l == 0) {
+		map.entities[0] = calloc(sizeof(mapentity_t), 1);
+		map.entities[0]->class = 0xF0;			// CLASS_TANK
+		map.entities[0]->x = 0x17 << 5;
+		map.entities[0]->y = 0x37 << 5;
+	}
+
+	for (i=0; i<numetys; ++i) {
+		map.entities[i+extra] = calloc(sizeof(mapentity_t), 1);
+		map.entities[i+extra]->class = etyclass[i];
+		map.entities[i+extra]->x = (int)(etyx[i]) << 5;
+		map.entities[i+extra]->y = (int)(etyy[i]) << 5;
+#if 0
+		if (etyclass[i] == 0xFF) {
+			fprintf(stderr, "Marker data: 0x%02X, 0x%02X\n", etyx[i], etyy[i]);
+		}
+#endif
+	}
+
+	map.gravity = 0.5;
+	// Sixth level is icy...
+	if (l == 5)
+		map.friction = 0.0078125;
+	else
+		map.friction = 0.25;
+
+	// Set the music file:
+	map.music_filename = calloc(32, 1);
+	sprintf(map.music_filename, "music/map%02X.ogg", n % 8);
+
+	// Set the game DLL file:
+	map.game_filename = calloc(16, 1);
+	sprintf(map.game_filename, "game/map%02X", n);
+
+}
+
 #define FLIP_H			0x01
 #define FLIP_V			0x02
 
@@ -454,287 +607,6 @@ int SDL_SavePNG(SDL_Surface *texture, const char *filename) {
 
 	/* that's it */
 	return 0;
-}
-
-// Map stuff:
-
-void Uncompress2x2(Uint8 *tmap, int tx, int ty, Uint8 t) {
-	Uint8	v;
-	// Wrap 2 tiles around in both directions:
-	if (level < 8) { tx -= 2; ty -= 2; }
-	if (tx < 0) tx += map.width;
-	if (ty < 0) ty += map.height;
-	tmap[(ty << 7) | tx] = t;
-}
-
-void Uncompress4x4(Uint8 *tmap, int tx, int ty, Uint8 t) {
-	Uncompress2x2(tmap, tx  , ty  , map4x4[(t << 2)+0]);
-	Uncompress2x2(tmap, tx+1, ty  , map4x4[(t << 2)+1]);
-	Uncompress2x2(tmap, tx  , ty+1, map4x4[(t << 2)+2]);
-	Uncompress2x2(tmap, tx+1, ty+1, map4x4[(t << 2)+3]);
-};
-
-void Uncompress8x8(Uint8 *tmap, int tx, int ty, Uint8 t) {
-	Uncompress4x4(tmap, tx  , ty  , map8x8[(t << 2)+0]);
-	Uncompress4x4(tmap, tx+2, ty  , map8x8[(t << 2)+1]);
-	Uncompress4x4(tmap, tx  , ty+2, map8x8[(t << 2)+2]);
-	Uncompress4x4(tmap, tx+2, ty+2, map8x8[(t << 2)+3]);
-};
-
-void door_tag(mapdoor_t *door, int mapflags, int level, int x, int y) {
-	// Structure to hold door information:
-	typedef struct {
-		int		level;
-		int		x, y;
-		int		doortag;
-		char	*targetmap;
-	} door_tag_struc_t;
-	
-	// tag  0x00 - no tag used
-	// tags 0x01 - 0x1F are used for internal stage warping (stage 7 mostly)
-	// tags 0x20 - 0x3F are used for stage-to-stage warping
-	// tags 0x40 - 0x5F are used for outdoor-to-indoor warping (Jason levels)
-	
-	// Constant static data for known doors and hand-entered door tags:
-	const static door_tag_struc_t known_tags[] = {
-		// Outdoor Stage-warping:
-		{level:0 , x:0x07, y:0x2B, doortag:0x23, targetmap:"maps/map03.bma"},
-		{level:0 , x:0x07, y:0x7B, doortag:0x21, targetmap:"maps/map01.bma"},
-		{level:1 , x:0x43, y:0x49, doortag:0x21, targetmap:"maps/map00.bma"},
-		{level:1 , x:0x14, y:0x5B, doortag:0x22, targetmap:"maps/map02.bma"},
-		{level:1 , x:0x1C, y:0x6B, doortag:0x26, targetmap:"maps/map06.bma"},
-		{level:2 , x:0x53, y:0x05, doortag:0x22, targetmap:"maps/map01.bma"},
-		{level:2 , x:0x3F, y:0x15, doortag:0x27, targetmap:"maps/map07.bma"},
-		{level:3 , x:0x04, y:0x09, doortag:0x23, targetmap:"maps/map00.bma"},
-		{level:3 , x:0x78, y:0x19, doortag:0x24, targetmap:"maps/map04.bma"},
-		{level:4 , x:0x6C, y:0x05, doortag:0x25, targetmap:"maps/map05.bma"},
-		{level:4 , x:0x34, y:0x09, doortag:0x24, targetmap:"maps/map03.bma"},
-		{level:5 , x:0x03, y:0x79, doortag:0x25, targetmap:"maps/map04.bma"},
-		{level:6 , x:0x03, y:0x37, doortag:0x26, targetmap:"maps/map01.bma"},
-		{level:7 , x:0x37, y:0x05, doortag:0x27, targetmap:"maps/map02.bma"},
-		// Stage 7 internal warping:
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		{level:6 , x:0x00, y:0x00, doortag:0x00, targetmap:NULL},
-		// Indoor stage-warping:
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-		{level:0 , x:0x00, y:0x00, doortag:0x40, targetmap:"maps/map08.bma"},
-	};
-	const int num_doors_known = sizeof(known_tags) / sizeof(door_tag_struc_t);
-	int		i;
-	
-	// Search thru our constant known data of doors:
-	for (i=0; i<num_doors_known; ++i) {
-		// In the same level?
-		if (level == known_tags[i].level) {
-			// Same position?
-			if ( (x == known_tags[i].x) && (y == known_tags[i].y) ) {
-				fprintf(stderr, "Known_Door[%d] = {%2d, 0x%02X, 0x%02X, 0x%02X, \"%s\"}\n", i,
-						known_tags[i].level, known_tags[i].x, known_tags[i].y, known_tags[i].doortag, known_tags[i].targetmap);
-				fprintf(stderr, "Match!          {%2d, 0x%02X, 0x%02X}\n", level, x, y);
-				// Set the tag and map-name we assigned:
-				door->tag = known_tags[i].doortag;
-				door->targetmap = known_tags[i].targetmap;
-				return;
-			}
-		}
-	}
-	
-	// Not used:
-	door->targetmap = NULL;
-	if (mapflags & MAPFLAG_JASON) door->tag = 0x40; else door->tag = 0X20;
-	return;
-}
-
-// Converts map from NES ROM into our native map format:
-void ConvertMap(int l, int n, int numtex) {
-	char	tempf[256];
-	int		i, m, x, y, total_tag, extra;
-
-	// Assign texture filenames:
-	map.numtextures = numtex;
-	map.texturefile = (char **) calloc(sizeof(char *) * numtex, 1);
-	map.texturefile_loaded = 1;
-
-	for (i=0; i<map.numtextures; ++i) {
-		sprintf(tempf, "textures/bgtile%X%X.png", l, i);
-		map.texturefile[i] = (char *) calloc(strlen(tempf) + 1, 1);
-		strcpy(map.texturefile[i], tempf);
-	}
-
-	// Directly copy the map2x2 data:
-	map.map2x2_size = levelsizes[(l<<2)+0] >> 2;
-	map.map2x2 = (Uint8 *) calloc(levelsizes[(l<<2)+0], 1);
-	map.map2x2_loaded = 1;
-	memcpy(map.map2x2, map2x2, levelsizes[(l<<2)+0]);
-	for (i=0; i<map.map2x2_size; ++i) {
-		//map.map2x2[i] = ((map.map2x2[i] & 0x0F) << 4) | ((map.map2x2[i] >> 4) & 0x0F);
-	}
-
-	// Directly copy the mapflags data:
-	map.mapflags = (Uint8 *) calloc(map.map2x2_size * sizeof(Uint8), 1);
-	memcpy(map.mapflags, mapflags, map.map2x2_size * sizeof(Uint8));
-	map.mapflags_loaded = 1;
-
-	map.map = calloc(sizeof(Uint8) * map.width * map.height, 1);
-	map.map_loaded = 1;
-
-	// Draw the map out from the "compressed" data:
-	for (y=0;y<map.height >> 2;++y) {
-		for (x=0;x<map.width >> 2;++x) {
-			Uncompress8x8(map.map, x << 2, y << 2, map32x32[(y << 5) | x]);
-		}
-	}
-
-	// Now, look thru the map and find doors:
-	map.doors_loaded = 1;
-	/*
-	for (y=0; y<map.height; ++y)
-		for (x=0; x<map.width; ++x) {
-			m = map.mapflags[map.map[(y << 7) | x]];
-			// Its got the DOOR flag set without the SOLID flag:
-			if ( (m & MAPFLAG_DOOR) && !(m & MAPFLAG_SOLID) ) {
-				// Add the door:
-				map.doors = realloc(map.doors, sizeof(mapdoor_t *) * ++map.num_doors);
-				i = map.num_doors - 1;
-				map.doors[i] = calloc(sizeof(mapdoor_t), 1);
-				map.doors[i]->x = x;
-				map.doors[i]->y = y;
-				// Call a door-tag mapping function depending on where the door is and
-				// from what level:
-				door_tag(map.doors[i], m, l, x, y);
-			}
-		}
-	*/
-
-	// First get a count of gateways for this level:
-	map.num_doors = 0;
-	for (i = 0; i < gatewaycount; ++i) {
-		if (gateways[i].levela == ((l + 8) % 16)) {
-			++map.num_doors;
-		}
-		if (gateways[i].levelb == ((l + 8) % 16)) {
-			++map.num_doors;
-		}
-	}
-	map.doors = realloc(map.doors, sizeof(mapdoor_t *) * map.num_doors);
-
-	unsigned char	ltag[16];
-	for (i = 0; i < 16; ++i) ltag[i] = 0;
-
-	m = 0;
-	for (i = 0; i < gatewaycount; ++i) {
-		int	lc = ((l + 8) % 16);
-		if (gateways[i].levela == lc) {
-			int	lb = ((gateways[i].levelb + 8) % 16);
-			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
-			map.doors[m]->x = gateways[i].xa;
-			map.doors[m]->y = gateways[i].ya;
-			if (l < 8) { map.doors[m]->x -= 2; map.doors[m]->y -= 2; }
-			map.doors[m]->tag = i+1;
-			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
-			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
-			if (lb < 10)
-				map.doors[m]->targetmap[9] = lb + '0';
-			else
-				map.doors[m]->targetmap[9] = lb - 10 + 'A';
-			++m;
-		}
-		if (gateways[i].levelb == lc) {
-			int	la = ((gateways[i].levela + 8) % 16);
-			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
-			map.doors[m]->x = gateways[i].xb;
-			map.doors[m]->y = gateways[i].yb;
-			if (l < 8) { map.doors[m]->x -= 2; map.doors[m]->y -= 2; }
-			map.doors[m]->tag = i+1;
-			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
-			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
-			if (la < 10)
-				map.doors[m]->targetmap[9] = la + '0';
-			else
-				map.doors[m]->targetmap[9] = la - 10 + 'A';
-			++m;
-		}
-	}
-
-	// Store all entities:
-	if (l == 0) extra = 1; else extra = 0;
-	map.num_entities = numetys + extra;
-
-	map.entities_loaded = 1;
-	map.entities = calloc(sizeof(mapentity_t *) * (numetys + extra), 1);
-
-	// Add the tank for level 0 only:
-	if (l == 0) {
-		map.entities[0] = calloc(sizeof(mapentity_t), 1);
-		map.entities[0]->class = 0xF0;			// CLASS_TANK
-		map.entities[0]->x = 0x15 << 5;
-		map.entities[0]->y = 0x35 << 5;
-	}
-
-	for (i=0; i<numetys; ++i) {
-		map.entities[i+extra] = calloc(sizeof(mapentity_t), 1);
-		map.entities[i+extra]->class = etyclass[i];
-		if (l < 8) {
-			map.entities[i+extra]->x = (int)wrap_x(etyx[i] - 2) << 5;
-			map.entities[i+extra]->y = (int)wrap_y(etyy[i] - 2) << 5;
-		} else {
-			map.entities[i+extra]->x = (int)(etyx[i]) << 5;
-			map.entities[i+extra]->y = (int)(etyy[i]) << 5;
-		}
-#if 0
-		if (etyclass[i] == 0xFF) {
-			fprintf(stderr, "Marker data: 0x%02X, 0x%02X\n", etyx[i], etyy[i]);
-		}
-#endif
-	}
-
-	map.gravity = 0.5;
-	// Sixth level is icy...
-	if (l == 5)
-		map.friction = 0.0078125;
-	else
-		map.friction = 0.25;
-
-	// Set the music file:
-	map.music_filename = calloc(32, 1);
-	sprintf(map.music_filename, "music/map%02X.ogg", n % 8);
-
-	// Set the game DLL file:
-	map.game_filename = calloc(16, 1);
-	sprintf(map.game_filename, "game/map%02X", n);
-
 }
 
 // Saves all variants of sprites and background textures to files:
