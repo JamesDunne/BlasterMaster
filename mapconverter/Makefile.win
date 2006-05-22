@@ -1,0 +1,32 @@
+# Project: Map Extractor
+# Makefile created by Dev-C++ 4.9.9.0
+
+CPP  = g++.exe
+CC   = gcc.exe
+WINDRES = windres.exe
+RES  = 
+OBJ  = tilepager.o ../common/newmap.o $(RES)
+LINKOBJ  = tilepager.o ../common/newmap.o $(RES)
+LIBS =  -L"C:/Dev-Cpp/lib" -lmingw32 -lSDLmain -lSDL -lpng -lz  
+INCS =  -I"C:/Dev-Cpp/include"  -I"../common" 
+CXXINCS =  -I"C:/Dev-Cpp/include/c++/3.3.1"  -I"C:/Dev-Cpp/include/c++/3.3.1/mingw32"  -I"C:/Dev-Cpp/include/c++/3.3.1/backward"  -I"C:/Dev-Cpp/lib/gcc-lib/mingw32/3.3.1/include"  -I"C:/Dev-Cpp/include"  -I"../common" 
+BIN  = "../Map Extractor.exe"
+CXXFLAGS = $(CXXINCS)   -fexpensive-optimizations
+CFLAGS = $(INCS) -Dmain=SDL_main   -fexpensive-optimizations
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before "../Map Extractor.exe" all-after
+
+
+clean: clean-custom
+	rm -f $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(CC) $(LINKOBJ) -o "..\Map Extractor.exe" $(LIBS)
+
+tilepager.o: tilepager.c
+	$(CC) -c tilepager.c -o tilepager.o $(CFLAGS)
+
+../common/newmap.o: ../common/newmap.c
+	$(CC) -c ../common/newmap.c -o ../common/newmap.o $(CFLAGS)
