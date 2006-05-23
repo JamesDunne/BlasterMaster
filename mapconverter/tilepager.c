@@ -349,10 +349,121 @@ void Uncompress8x8(Uint8 *tmap, int tx, int ty, Uint8 t) {
 	Uncompress4x4(tmap, tx+2, ty+2, map8x8[(t << 2)+3]);
 };
 
+
+////////////////////////////////
+int	used[8][8];
+
+int is_used_up(int x, int y) {
+	return used[y == 0 ? 7 : y - 1][x];
+}
+
+int is_used_down(int x, int y) {
+	return used[y == 7 ? 0 : y + 1][x];
+}
+
+int is_used_left(int x, int y) {
+	return used[y][x == 0 ? 7 : x - 1];
+}
+
+int is_used_right(int x, int y) {
+	return used[y][x == 7 ? 0 : x + 1];
+}
+
+////////////////////////////////
+
+int is_blocked_up(int x, int y) {
+	return (scrollv[y] & (1 << (7-x)));
+}
+
+int is_blocked_down(int x, int y) {
+	return (scrollv[(y == 7) ? 0 : (y + 1)] & (1 << (7-x)));
+}
+
+int is_blocked_left(int x, int y) {
+	return (scrollh[y] & ( 1 << (7-x) ));
+}
+
+int is_blocked_right(int x, int y) {
+	return (scrollh[y] & ( 1 << ((x == 7) ? 7 : (7-x)-1) ));
+}
+
+void fill_used(int lx, int ty, int rx, int by) {
+	int	tmpx, tmpy;
+	if (rx < lx) {
+		if (by < ty) {
+			for (tmpy = ty; tmpy <= 7; ++tmpy) {
+				for (tmpx = lx; tmpx <= 7; ++tmpx) {
+					used[tmpy][tmpx] = -1;
+				}
+				for (tmpx = 0; tmpx <= rx; ++tmpx) {
+					used[tmpy][tmpx] = -1;
+				}
+			}
+			for (tmpy = 0; tmpy <= by; ++tmpy) {
+				for (tmpx = lx; tmpx <= 7; ++tmpx) {
+					used[tmpy][tmpx] = -1;
+				}
+				for (tmpx = 0; tmpx <= rx; ++tmpx) {
+					used[tmpy][tmpx] = -1;
+				}
+			}
+		} else {
+			for (tmpy = ty; tmpy <= by; ++tmpy) {
+				for (tmpx = lx; tmpx <= 7; ++tmpx) {
+					used[tmpy][tmpx] = -1;
+				}
+				for (tmpx = 0; tmpx <= rx; ++tmpx) {
+					used[tmpy][tmpx] = -1;
+				}
+			}
+		}
+	} else {
+		if (by < ty) {
+			for (tmpy = ty; tmpy <= 7; ++tmpy) {
+				for (tmpx = lx; tmpx <= rx; ++tmpx) {
+					used[tmpy][tmpx] = -1;
+				}
+			}
+			for (tmpy = 0; tmpy <= by; ++tmpy) {
+				for (tmpx = lx; tmpx <= rx; ++tmpx) {
+					used[tmpy][tmpx] = -1;
+				}
+			}
+		} else {
+			for (tmpy = ty; tmpy <= by; ++tmpy) {
+				for (tmpx = lx; tmpx <= rx; ++tmpx) {
+					used[tmpy][tmpx] = -1;
+				}
+			}
+		}
+	}
+}
+
+int convert_level_number(int n) {
+	if (n < 8) return n;
+	switch (n) {
+		case  8: return  8;
+		case  9: return 11;
+		case 10: return  9;
+		case 11: return 14;
+		case 12: return 10;
+		case 13: return 12;
+		case 14: return 15;
+		case 15: return 13;
+		default: return -1;
+	}
+}
+
 // Converts map from NES ROM into our native map format:
 void ConvertMap(int l, int n, int numtex) {
 	char	tempf[256];
 	int		i, m, x, y, total_tag, extra;
+
+	int		sx, sy;
+	int		lx, rx, ty, by;
+	int		tmpx, tmpy;
+
+	int		revlev;
 
 	// Assign texture filenames:
 	map.numtextures = numtex;
@@ -389,13 +500,14 @@ void ConvertMap(int l, int n, int numtex) {
 		}
 	}
 
+	revlev = (n + 8) % 16;
 	// First get a count of gateways for this level:
 	map.num_doors = 0;
 	for (i = 0; i < gatewaycount; ++i) {
-		if (gateways[i].levela == ((l + 8) % 16)) {
+		if (gateways[i].levela == revlev) {
 			++map.num_doors;
 		}
-		if (gateways[i].levelb == ((l + 8) % 16)) {
+		if (gateways[i].levelb == revlev) {
 			++map.num_doors;
 		}
 	}
@@ -404,8 +516,7 @@ void ConvertMap(int l, int n, int numtex) {
 
 	m = 0;
 	for (i = 0; i < gatewaycount; ++i) {
-		int	lc = ((l + 8) % 16);
-		if (gateways[i].levela == lc) {
+		if (gateways[i].levela == revlev) {
 			int	lb = ((gateways[i].levelb + 8) % 16);
 			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
 			map.doors[m]->x = gateways[i].xa;
@@ -419,7 +530,7 @@ void ConvertMap(int l, int n, int numtex) {
 				map.doors[m]->targetmap[9] = lb - 10 + 'A';
 			++m;
 		}
-		if (gateways[i].levelb == lc) {
+		if (gateways[i].levelb == revlev) {
 			int	la = ((gateways[i].levela + 8) % 16);
 			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
 			map.doors[m]->x = gateways[i].xb;
@@ -471,6 +582,99 @@ void ConvertMap(int l, int n, int numtex) {
 		}
 	}
 	printf("+\n");
+
+	// Find extents of each scroll region:
+
+	// Scroll regions are *always* rectangular, so we can take advantage of that.
+
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			used[y][x] = 0;
+		}
+	}
+
+	// Exceptions for oddly-shaped levels with unused space:
+	if (n == 8) {
+		for (tmpy = 0; tmpy <= 7; ++tmpy)
+			for (tmpx = 6; tmpx <= 7; ++tmpx)
+				used[tmpy][tmpx] = -1;
+		for (tmpy = 6; tmpy <= 7; ++tmpy)
+			for (tmpx = 0; tmpx <= 5; ++tmpx)
+				used[tmpy][tmpx] = -1;
+	} else if (n == 10) {
+		for (tmpy = 0; tmpy <= 7; ++tmpy)
+			used[tmpy][7] = -1;
+		for (tmpy = 6; tmpy <= 7; ++tmpy)
+			for (tmpx = 4; tmpx <= 6; ++tmpx)
+				used[tmpy][tmpx] = -1;
+	}
+
+	map.num_regions = 0;
+	map.regions = NULL;
+	map.regions_loaded = 1;
+	for (;;) {
+		// Find a starting room:
+		for (sy = 0; sy < 8; ++sy) {
+			for (sx = 0; sx < 8; ++sx) {
+				if (used[sy][sx] == 0) {
+					break;
+				}
+			}
+			if (sx < 8) {
+				if (used[sy][sx] == 0) break;
+			}
+		}
+		if (sy == 8 || sx == 8) break;
+
+		// Make the rectangle:
+		used[sy][sx] = -1;
+		x = sx; y = sy;
+		lx = sx; ty = sy;
+		rx = sx; by = sy;
+		for (;;) {
+			if ((is_used_right(x,y) == 0) && (is_blocked_right(x,y) == 0)) {
+				//printf("right at %d,%d\n", x, y);
+				x++;
+				if (x > 7) x = 0;
+				if (x > rx || x == 0) rx = x;
+				fill_used(lx, ty, rx, by);
+			} else if ((is_used_down(x,y) == 0) && (is_blocked_down(x,y) == 0)) {
+				//printf("down at %d,%d\n", x, y);
+				y++;
+				if (y > 7) y = 0;
+				if (y > by || y == 0) by = y;
+				fill_used(lx, ty, rx, by);
+			} else if ((is_used_left(x,y) == 0) && (is_blocked_left(x,y) == 0)) {
+				//printf("left at %d,%d\n", x, y);
+				x--;
+				if (x < 0) x = 7;
+				if (x < lx || x == 7) lx = x;
+				fill_used(lx, ty, rx, by);
+			} else if ((is_used_up(x,y) == 0) && (is_blocked_up(x,y) == 0)) {
+				//printf("up at %d,%d\n", x, y);
+				y--;
+				if (y < 0) y = 7;
+				if (y < ty || y == 7) ty = y;
+				fill_used(lx, ty, rx, by);
+			} else {
+				if (x == sx && y == sy) {
+					//printf("stop at %d,%d\n", x, y);
+					printf("{%d, %d} to {%d, %d}\n", lx*16, ty*16, rx*16+15, by*16+15);
+					map.num_regions++;
+					map.regions = realloc(map.regions, sizeof(mapregion_t *) * map.num_regions);
+					map.regions[map.num_regions - 1] = calloc(sizeof(mapregion_t), 1);
+					map.regions[map.num_regions - 1]->lx = lx*16;
+					map.regions[map.num_regions - 1]->ty = ty*16;
+					map.regions[map.num_regions - 1]->rx = rx*16+15;
+					map.regions[map.num_regions - 1]->by = by*16+15;
+					break;
+				}
+				//printf("reset at %d,%d back to %d,%d\n", x, y, sx, sy);
+				x = sx;
+				y = sy;
+			}
+		}
+	}
 
 	// Store all entities:
 	if (l == 0) extra = 1; else extra = 0;

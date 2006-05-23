@@ -334,7 +334,7 @@ void ConvertMap(int l, int n, int numtex) {
 			} else {
 				if (x == sx && y == sy) {
 					//printf("stop at %d,%d\n", x, y);
-					printf("{%d, %d} to {%d, %d}\n", lx, ty, rx, by);
+					printf("{%d, %d} to {%d, %d}\n", lx*16, ty*16, rx*16+15, by*16+15);
 					break;
 				}
 				//printf("reset at %d,%d back to %d,%d\n", x, y, sx, sy);
