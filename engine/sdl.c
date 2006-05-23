@@ -5,6 +5,9 @@
 #include "newmap.h"
 
 SDL_Surface		*fgsprites[16];
+SDL_Surface		*fgspritesh[16];
+SDL_Surface		*fgspritesv[16];
+SDL_Surface		*fgspriteshv[16];
 SDL_Surface		*bgsprites[16];
 
 SDL_Surface	*srfVideo;
@@ -39,79 +42,69 @@ int put_sprite(fixed x,fixed y,int m,GLuint sprite)
 // Flip horizontally:
 int put_sprite_hflip(fixed x,fixed y,int m,GLuint sprite)
 {
-/*	GLfloat	tx1, ty1, tx2, ty2;
+	SDL_Rect	src, dst;
 
-	tx1 = (sprite & 0x0F) * 0.0625f;
-	ty1 = (sprite >> 4) * 0.0625f;
-	tx2 = tx1 + 0.0625f;
-	ty2 = ty1 + 0.0625f;
+	// Where to find the source sprite:
+	src.x = (sprite & 0x0F) << 4;
+	src.y = (sprite >> 4) << 4;
+	src.w = 16;
+	src.h = 16;
 
-	glBindTexture(GL_TEXTURE_2D, fgsprites[m]);
+	// Where to blit the surface on the video:
+	dst.x = (long)x;
+	dst.y = (long)y;
+	dst.w = 16;
+	dst.h = 16;
 
-	glPushMatrix();
-	glTranslatef(x, y, 0);
-	// Draw the sprite:
-	glBegin(GL_QUADS);
-	glTexCoord2f(tx2, ty1); glVertex2i(0 , 0 );
-	glTexCoord2f(tx1, ty1); glVertex2i(16, 0 );
-	glTexCoord2f(tx1, ty2); glVertex2i(16, 16);
-	glTexCoord2f(tx2, ty2); glVertex2i(0 , 16);
-	glEnd();
-	glPopMatrix();
-*/
+	// Blit the surface:
+	SDL_BlitSurface(fgspritesh[m], &src, SDL_GetVideoSurface(), &dst);
+
 	return 0;
 }
 
 // Flip vertically
 int put_sprite_vflip(fixed x,fixed y,int m,GLuint sprite)
 {
-/*	GLfloat	tx1, ty1, tx2, ty2;
+	SDL_Rect	src, dst;
 
-	tx1 = (sprite & 0x0F) * 0.0625f;
-	ty1 = (sprite >> 4) * 0.0625f;
-	tx2 = tx1 + 0.0625f;
-	ty2 = ty1 + 0.0625f;
+	// Where to find the source sprite:
+	src.x = (sprite & 0x0F) << 4;
+	src.y = (sprite >> 4) << 4;
+	src.w = 16;
+	src.h = 16;
 
-	glBindTexture(GL_TEXTURE_2D, fgsprites[m]);
+	// Where to blit the surface on the video:
+	dst.x = (long)x;
+	dst.y = (long)y;
+	dst.w = 16;
+	dst.h = 16;
 
-	glPushMatrix();
-	glTranslatef(x, y, 0);
-	// Draw the sprite:
-	glBegin(GL_QUADS);
-	glTexCoord2f(tx1, ty2); glVertex2i(0 , 0 );
-	glTexCoord2f(tx2, ty2); glVertex2i(16, 0 );
-	glTexCoord2f(tx2, ty1); glVertex2i(16, 16);
-	glTexCoord2f(tx1, ty1); glVertex2i(0 , 16);
-	glEnd();
-	glPopMatrix();
-*/
+	// Blit the surface:
+	SDL_BlitSurface(fgspritesv[m], &src, SDL_GetVideoSurface(), &dst);
+
 	return 0;
 }
 
 // Flip horizontally and vertically:
 int put_sprite_hvflip(fixed x,fixed y,int m,GLuint sprite)
 {
-/*
-	GLfloat	tx1, ty1, tx2, ty2;
+	SDL_Rect	src, dst;
 
-	tx1 = (sprite & 0x0F) * 0.0625f;
-	ty1 = (sprite >> 4) * 0.0625f;
-	tx2 = tx1 + 0.0625f;
-	ty2 = ty1 + 0.0625f;
+	// Where to find the source sprite:
+	src.x = (sprite & 0x0F) << 4;
+	src.y = (sprite >> 4) << 4;
+	src.w = 16;
+	src.h = 16;
 
-	glBindTexture(GL_TEXTURE_2D, fgsprites[m]);
+	// Where to blit the surface on the video:
+	dst.x = (long)x;
+	dst.y = (long)y;
+	dst.w = 16;
+	dst.h = 16;
 
-	glPushMatrix();
-	glTranslatef(x, y, 0);
-	// Draw the sprite:
-	glBegin(GL_QUADS);
-	glTexCoord2f(tx2, ty2); glVertex2i(0 , 0 );
-	glTexCoord2f(tx1, ty2); glVertex2i(16, 0 );
-	glTexCoord2f(tx1, ty1); glVertex2i(16, 16);
-	glTexCoord2f(tx2, ty1); glVertex2i(0 , 16);
-	glEnd();
-	glPopMatrix();
-*/
+	// Blit the surface:
+	SDL_BlitSurface(fgspriteshv[m], &src, SDL_GetVideoSurface(), &dst);
+
 	return 0;
 }
 
@@ -155,7 +148,13 @@ int InitTextures() {
 }
 
 void LoadTexture(int page, const char *filename) {
-	int			i, j;
+	int	i, j;
+	int	x, y;
+	unsigned long	tmp;
+	unsigned long	*px;
+	int		base1, base2;
+	Uint16	pitch;
+	Uint8	bpp;
 
 	if ((page < 0) || (page > 15)) return;
 
@@ -163,6 +162,18 @@ void LoadTexture(int page, const char *filename) {
 	if (fgsprites[page] != NULL) {
 		SDL_FreeSurface(fgsprites[page]);
 		fgsprites[page] = NULL;
+	}
+	if (fgspritesh[page] != NULL) {
+		SDL_FreeSurface(fgspritesh[page]);
+		fgspritesh[page] = NULL;
+	}
+	if (fgspritesv[page] != NULL) {
+		SDL_FreeSurface(fgspritesv[page]);
+		fgspritesv[page] = NULL;
+	}
+	if (fgspriteshv[page] != NULL) {
+		SDL_FreeSurface(fgspriteshv[page]);
+		fgspriteshv[page] = NULL;
 	}
 
 	// Create new texture:
@@ -172,15 +183,108 @@ void LoadTexture(int page, const char *filename) {
 		exit(-1);
 		return;
 	}
+
+	// Create a h-flipped version:
+	fgspritesh[page] = SDL_ConvertSurface(
+		fgsprites[page],
+		fgsprites[page]->format,
+		0
+	);
+	SDL_LockSurface(fgspritesh[page]);
+	px = (unsigned long *)fgspritesh[page]->pixels;
+	bpp = fgspritesh[page]->format->BytesPerPixel;
+	pitch = fgspritesh[page]->pitch;
+	for (y = 0; y < 256; ++y) {
+		base1 = (y * pitch / bpp);
+		for (x = 0; x < 16; ++x) {
+			base2 = (x * 16);
+			for (j = 0; j < 8; ++j) {
+				tmp = px[base1 + base2 + j];
+				px[base1 + base2 + j] = px[base1 + base2 + (15-j)];
+				px[base1 + base2 + (15-j)] = tmp;
+			}
+		}
+	}
+	SDL_UnlockSurface(fgspritesh[page]);
+
+	// Create a v-flipped version:
+	fgspritesv[page] = SDL_ConvertSurface(
+		fgsprites[page],
+		fgsprites[page]->format,
+		0
+	);
+	SDL_LockSurface(fgspritesv[page]);
+	px = (unsigned long *)fgspritesv[page]->pixels;
+	bpp = fgspritesv[page]->format->BytesPerPixel;
+	pitch = fgspritesv[page]->pitch;
+	for (x = 0; x < 256; ++x) {
+		for (y = 0; y < 16; ++y) {
+			base1 = y*16;
+			for (j = 0; j < 8; ++j) {
+				tmp = px[x + (base1 + j)*pitch/bpp];
+				px[x + (base1 + j)*pitch/bpp] = px[x + (base1 + (15-j))*pitch/bpp];
+				px[x + (base1 + (15-j))*pitch/bpp] = tmp;
+			}
+		}
+	}
+	SDL_UnlockSurface(fgspritesv[page]);
+
+	// Create a hv-flipped version:
+	fgspriteshv[page] = SDL_ConvertSurface(
+		fgsprites[page],
+		fgsprites[page]->format,
+		0
+	);
+	SDL_LockSurface(fgspriteshv[page]);
+	px = (unsigned long *)fgspriteshv[page]->pixels;
+	bpp = fgspriteshv[page]->format->BytesPerPixel;
+	pitch = fgspriteshv[page]->pitch;
+	// First, h-flip:
+	for (y = 0; y < 256; ++y) {
+		base1 = (y * pitch / bpp);
+		for (x = 0; x < 16; ++x) {
+			base2 = (x * 16);
+			for (j = 0; j < 8; ++j) {
+				tmp = px[base1 + base2 + j];
+				px[base1 + base2 + j] = px[base1 + base2 + (15-j)];
+				px[base1 + base2 + (15-j)] = tmp;
+			}
+		}
+	}
+	// Then, v-flip:
+	for (x = 0; x < 256; ++x) {
+		for (y = 0; y < 16; ++y) {
+			base1 = y*16;
+			for (j = 0; j < 8; ++j) {
+				tmp = px[x + (base1 + j)*pitch/bpp];
+				px[x + (base1 + j)*pitch/bpp] = px[x + (base1 + (15-j))*pitch/bpp];
+				px[x + (base1 + (15-j))*pitch/bpp] = tmp;
+			}
+		}
+	}
+	SDL_UnlockSurface(fgspriteshv[page]);
 }
 
 void FreeTextures() {
 	int	i;
-	for (i=0; i<16; ++i)
+	for (i=0; i<16; ++i) {
 		if (fgsprites[i] != NULL) {
 			SDL_FreeSurface(fgsprites[i]);
 			fgsprites[i] = 0;
 		}
+		if (fgspritesh[i] != NULL) {
+			SDL_FreeSurface(fgspritesh[i]);
+			fgspritesh[i] = 0;
+		}
+		if (fgspritesv[i] != NULL) {
+			SDL_FreeSurface(fgspritesv[i]);
+			fgspritesv[i] = 0;
+		}
+		if (fgspriteshv[i] != NULL) {
+			SDL_FreeSurface(fgspriteshv[i]);
+			fgspriteshv[i] = 0;
+		}
+	}
 
 	for (i=0; i<4; ++i) {
 		SDL_FreeSurface(bgsprites[i]);
@@ -262,7 +366,7 @@ void sys_init(int argc, char **argv) {
 
 	// Clear texture indicies:
 	for (i=0; i<16; ++i)
-		fgsprites[i] = bgsprites[i] = NULL;
+		fgsprites[i] = fgspritesh[i] = fgspritesv[i] = fgspriteshv[i] = bgsprites[i] = NULL;
 
 	// Don't show the mouse cursor in full screen:
 	if (sdlflags & SDL_FULLSCREEN)
