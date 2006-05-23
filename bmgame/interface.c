@@ -10,11 +10,50 @@ hostfunctions		*host = NULL;
 dllfunctions		*game = NULL;
 
 void init() {
+	int	i, reg;
+	int	lx, rx, ty, by;
+
 	// Load the level:
 	host->LoadLevel("maps/map00.bma");
-	
+
 //	(*host->screen_mx) = 4 * 128;
-//   (*host->screen_my) = 14 * 128;
+//  (*host->screen_my) = 14 * 128;
+
+	reg = -1;
+	for (i = 0; i < host->map->num_regions; ++i) {
+		lx = (host->map->regions[i]->lx << 5);
+		rx = (host->map->regions[i]->rx << 5) + 31;
+		ty = (host->map->regions[i]->ty << 5);
+		by = (host->map->regions[i]->by << 5) + 31;
+		int	test = 0;
+		if (lx > rx) {
+			if ((*host->player)->x >= lx && (*host->player)->x <= (host->map->width << 4)) test = -1;
+			else if ((*host->player)->x >= 0 && (*host->player)->x <= rx) test = -1;
+			else test = 0;
+		} else {
+			if ((*host->player)->x >= lx && (*host->player)->x <= rx) test = -1;
+			else test = 0;
+		}
+		if (test == 0) continue;
+		if (ty > by) {
+			if ((*host->player)->y >= ty && (*host->player)->y <= (host->map->height << 4)) test = -1;
+			else if ((*host->player)->y >= 0 && (*host->player)->y <= by) test = -1;
+			else test = 0;
+		} else {
+			if ((*host->player)->y >= ty && (*host->player)->y <= by) test = -1;
+			else test = 0;
+		}
+		if (test == -1) {
+			//printf("{%d,%d,%d,%d} {%g,%g}\n", lx, ty, rx, by, screen_mx, screen_my);
+			reg = i;
+			break;
+		}
+	}
+
+	if (reg != -1) {
+		(*host->screen_mx) = lx;
+		(*host->screen_my) = by - (*host->screen_h);
+	}
 }
 
 #ifdef WIN32
