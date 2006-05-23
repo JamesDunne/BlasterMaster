@@ -191,13 +191,13 @@ void LoadTexture(int page, const char *filename) {
 	SDL_Surface	*texture;
 
 	if ((page < 0) || (page > 15)) return;
-	
+
 	// Free old texture:
 	if (fgsprites[page] != 0) {
 		glDeleteTextures(1, &(fgsprites[page]));
 		fgsprites[page] = 0;
 	}
-	
+
 	// Create new texture:
 	glGenTextures(1, &fgsprites[page]);
 	texture = IMG_Load(filename);
@@ -304,14 +304,14 @@ void sys_init(int argc, char **argv) {
 		}
 	}
 
-	// Clear texture indicies:	
+	// Clear texture indicies:
 	for (i=0; i<16; ++i)
 		fgsprites[i] = bgsprites[i] = 0;
 
 	// Don't show the mouse cursor in full screen:
 	if (sdlflags & SDL_FULLSCREEN)
 		SDL_ShowCursor(0);
-		
+
 	curticks = 0;
 };
 
@@ -359,18 +359,18 @@ void sys_updatescreen() {
 	static long numframes = 0;
 	static clock_t	lastclock = 0;
 	clock_t	curclock;
-	
+
 	// About 60 fps:	(60fps = 16.667 ms/frame)
 	while (SDL_GetTicks() - curticks <= 16);
 	curticks = SDL_GetTicks();
-	
+
 	time_dt = 1;
-	
+
 	SDL_GL_SwapBuffers();
 
 #if 0
 	numframes++;
-	
+
 	long	newticks = SDL_GetTicks();
 	if (newticks - curticks >= 1000) {
 		fprintf(stderr, "%3.2f fps = %d frames in %d ms\n", ((double)numframes / ((double)(newticks - curticks) / 1000.0)), numframes, newticks - curticks);
@@ -478,7 +478,7 @@ void sys_eventloop(Uint8 *control_keys) {
 			if ( event.jhat.hat & SDL_HAT_LEFT ) {
 				*control_keys |= BUT_LEFT;
 				*control_keys &= ~BUT_RIGHT;
-				
+
 			}
 			if ( event.jhat.hat & SDL_HAT_RIGHT ) {
 				*control_keys &= ~BUT_LEFT;

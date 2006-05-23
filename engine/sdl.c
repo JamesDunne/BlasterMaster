@@ -1,3 +1,4 @@
+#include <time.h>
 #include "common.h"
 #include "bm.h"
 #include "opengl.h"
@@ -9,27 +10,29 @@ SDL_Surface		*bgsprites[16];
 SDL_Surface	*srfVideo;
 Uint32		curticks;
 int			fullscreen, level_loaded;
+double		accel_scale;
+double		time_dt;
 
 // -- Main sprite routines --
 int put_sprite(fixed x,fixed y,int m,GLuint sprite)
 {
 	SDL_Rect	src, dst;
-	
+
 	// Where to find the source sprite:
 	src.x = (sprite & 0x0F) << 4;
 	src.y = (sprite >> 4) << 4;
 	src.w = 16;
 	src.h = 16;
-	
+
 	// Where to blit the surface on the video:
 	dst.x = (long)x;
 	dst.y = (long)y;
 	dst.w = 16;
 	dst.h = 16;
-	
+
 	// Blit the surface:
 	SDL_BlitSurface(fgsprites[m], &src, SDL_GetVideoSurface(), &dst);
-	
+
 	return 0;
 }
 
@@ -114,17 +117,17 @@ int put_sprite_hvflip(fixed x,fixed y,int m,GLuint sprite)
 
 int put_bgtile(fixed x, fixed y, int m, unsigned char t, int bg) {
 	SDL_Rect	src, dst;
-	
+
 	src.x = (t >> 4) << 4;
 	src.y = (t & 0x0F) << 4;
 	src.w = src.h = 16;
-	
+
 	dst.x = (long)x;
 	dst.y = (long)y;
 	dst.w = dst.h = 16;
-	
+
 	SDL_BlitSurface(bgsprites[m & 3], &src, SDL_GetVideoSurface(), &dst);
-	
+
 	return 0;
 }
 
@@ -139,7 +142,7 @@ void Draw2x2BGTile(fixed x, fixed y, int t, int bg) {
 int InitTextures() {
 	int		i, j;
 	char	filename[256];
-	
+
 	for (j=0; j<map.numtextures; ++j) {
 		bgsprites[j] = IMG_Load(map.texturefile[j]);
 		if (bgsprites[j] == NULL) {
@@ -147,21 +150,21 @@ int InitTextures() {
 			return -1;
 		}
 	}
-	
+
 	return 0;
 }
 
 void LoadTexture(int page, const char *filename) {
 	int			i, j;
-	
+
 	if ((page < 0) || (page > 15)) return;
-	
+
 	// Free old texture:
 	if (fgsprites[page] != NULL) {
 		SDL_FreeSurface(fgsprites[page]);
 		fgsprites[page] = NULL;
 	}
-	
+
 	// Create new texture:
 	fgsprites[page] = IMG_Load(filename);
 	if (fgsprites[page] == NULL) {
@@ -178,7 +181,7 @@ void FreeTextures() {
 			SDL_FreeSurface(fgsprites[i]);
 			fgsprites[i] = 0;
 		}
-		
+
 	for (i=0; i<4; ++i) {
 		SDL_FreeSurface(bgsprites[i]);
 		bgsprites[i] = 0;
@@ -203,20 +206,20 @@ void InitGL(int Width, int Height) {
 void sys_init(int argc, char **argv) {
 	int i, w, h;
 	unsigned long sdlflags;
-    Uint32 rmask, gmask, bmask, amask;
-	
+	Uint32 rmask, gmask, bmask, amask;
+
 	/* Initialize SDL for video output */
 	if ( SDL_Init(SDL_INIT_VIDEO) < 0 ) {
 		fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
 		exit(1);
 	}
-	
+
 	// Enable the joystick subsystem:
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
-	
+
 	// Default resolution:
-	screen_w = 640; screen_h = 480;
-	
+	screen_w = 512; screen_h = 448;
+
 	// Scan program arguments:
 	sdlflags = SDL_DOUBLEBUF | SDL_HWSURFACE | SDL_HWACCEL;
 	for (i=1; i<argc; ++i) {
@@ -224,7 +227,7 @@ void sys_init(int argc, char **argv) {
 		if (strcmp(argv[i], "-w") == 0) screen_w = atoi(argv[i+1]);
 		if (strcmp(argv[i], "-h") == 0) screen_h = atoi(argv[i+1]);
 	}
-	
+
 	/* Create an SDL full-screen context */
 	srfVideo = SDL_SetVideoMode(screen_w, screen_h, 24, sdlflags);
 	if ( srfVideo == NULL ) {
@@ -232,22 +235,22 @@ void sys_init(int argc, char **argv) {
 		SDL_Quit();
 		exit(2);
 	}
-	
+
 	// Set the title bar in environments that support it:
 	SDL_WM_SetCaption("Blaster Master Engine Test", NULL);
-	
+
 	// Initialize OpenGL:
 	InitGL(screen_w, screen_h);
-	
+
 	level_loaded = 0;
-	
+
 	// Scan for joysticks:
 	printf("%i joysticks were found.\n\n", SDL_NumJoysticks() );
 	if (SDL_NumJoysticks() > 0) {
 		printf("The names of the joysticks are:\n");
-		
+
 		SDL_JoystickEventState(SDL_ENABLE);
-		
+
 		for( i=0; i < SDL_NumJoysticks(); i++ )
 		{
 			SDL_Joystick	*curjoy = SDL_JoystickOpen(i);
@@ -256,11 +259,11 @@ void sys_init(int argc, char **argv) {
 				SDL_JoystickNumHats(curjoy), SDL_JoystickNumBalls(curjoy));
 		}
 	}
-	
-	// Clear texture indicies:	
+
+	// Clear texture indicies:
 	for (i=0; i<16; ++i)
 		fgsprites[i] = bgsprites[i] = NULL;
-	
+
 	// Don't show the mouse cursor in full screen:
 	if (sdlflags & SDL_FULLSCREEN)
 		SDL_ShowCursor(0);
@@ -286,8 +289,15 @@ void sys_clearscreen() {
 }
 
 void sys_updatescreen() {
+	static long numframes = 0;
+	static clock_t	lastclock = 0;
+	clock_t	curclock;
+
 	// About 60 fps:	(60fps = 16.667 ms/frame)
-	//while (SDL_GetTicks() - curticks <= 16);
+	while (SDL_GetTicks() - curticks <= 16);
+	curticks = SDL_GetTicks();
+
+	time_dt = 1;
 
 	// Flip buffers:
 	SDL_Flip(srfVideo);
@@ -304,8 +314,8 @@ void sys_eventloop(Uint8 *control_keys) {
 		if ( event.type == SDL_KEYDOWN ) {
 			switch ( event.key.keysym.sym ) {
 				case SDLK_ESCAPE: quit = 1; break;
-				case SDLK_LEFT:		*control_keys |= BUT_LEFT; break;
-				case SDLK_RIGHT:	*control_keys |= BUT_RIGHT; break;
+				case SDLK_LEFT:		*control_keys |= BUT_LEFT; accel_scale = 1.0; break;
+				case SDLK_RIGHT:	*control_keys |= BUT_RIGHT; accel_scale = 1.0; break;
 				case SDLK_UP:		*control_keys |= BUT_UP; break;
 				case SDLK_DOWN:		*control_keys |= BUT_DOWN; break;
 				case SDLK_x:		*control_keys |= BUT_SHOOT; break;
@@ -346,12 +356,14 @@ void sys_eventloop(Uint8 *control_keys) {
 			// Left-right movement code:
 			if (( event.jaxis.axis == 0 ) || ( event.jaxis.axis == 4 )) {
 				//xaxis_scale = abs(event.jaxis.value);
-				if ( event.jaxis.value < -16384 ) {
+				if ( event.jaxis.value <= -1024 ) {
 					*control_keys |= BUT_LEFT;
 					*control_keys &= ~BUT_RIGHT;
-				} else if ( event.jaxis.value > 16384 ) {
+					accel_scale = -(event.jaxis.value / 32768.0);
+				} else if ( event.jaxis.value >= 1024 ) {
 					*control_keys &= ~BUT_LEFT;
 					*control_keys |= BUT_RIGHT;
+					accel_scale = (event.jaxis.value / 32768.0);
 				} else {
 					*control_keys &= ~BUT_LEFT;
 					*control_keys &= ~BUT_RIGHT;
@@ -390,6 +402,7 @@ void sys_eventloop(Uint8 *control_keys) {
 			if ( event.jhat.hat & SDL_HAT_LEFT ) {
 				*control_keys |= BUT_LEFT;
 				*control_keys &= ~BUT_RIGHT;
+
 			}
 			if ( event.jhat.hat & SDL_HAT_RIGHT ) {
 				*control_keys &= ~BUT_LEFT;
