@@ -2,7 +2,7 @@
 // Created 6/28/2002; 5:25:10 PM
 
 // #define CHEATING in order to have infinite hover and a better gun
-//#define CHEATING
+#define CHEATING
 
 #include <math.h>
 #include <string.h>

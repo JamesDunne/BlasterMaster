@@ -404,8 +404,52 @@ void bounds_check(entity self) {
 	}
 }
 
+void draw_vline_on_screen(int x, int y1, int y2, int offx, int offy) {
+	int	vx, vy1, vy2;
+
+	x *= 32;
+	if ((x < screen_mx) || (x > (screen_mx + screen_w))) return;
+
+	vx = x - screen_mx + offx;
+	vy1 = (y1 * 32) - screen_my;
+	vy2 = (y2 * 32) - screen_my + offy;
+
+	if (vy1 < 0) vy1 = 0;
+	if (vy2 > screen_h) vy2 = screen_h;
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glColor4f(0.7, 0.12, 0.5, 0.6);
+	glLineWidth(3.0);
+	glBegin(GL_LINES);
+		glVertex2i(vx, vy1);
+		glVertex2i(vx, vy2);
+	glEnd();
+}
+
+void draw_hline_on_screen(int y, int x1, int x2, int offx, int offy) {
+	int	vy, vx1, vx2;
+
+	y *= 32;
+	if ((y < screen_my) || (y > (screen_my + screen_h))) return;
+
+	vy = y - screen_my + offy;
+	vx1 = (x1 * 32) - screen_mx;
+	vx2 = (x2 * 32) - screen_mx + offx;
+
+	if (vx1 < 0) vx1 = 0;
+	if (vx2 > screen_w) vx2 = screen_w;
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glColor4f(0.7, 0.12, 0.5, 0.6);
+	glLineWidth(3.0);
+	glBegin(GL_LINES);
+		glVertex2i(vx1, vy);
+		glVertex2i(vx2, vy);
+	glEnd();
+}
+
 void process_entities() {
-	int		i, reg, j, m, goodent;
+	int		i, j, m, goodent;
 	fixed	x, y, x1, y1, x2, y2;
 	entity	e;
 
@@ -515,64 +559,86 @@ void process_entities() {
 			screen_my = (player->y - scroll_top);
 
 		// Limit scrolling to scroll-regions:
-		reg = -1;
-		for (i = 0; i < map.num_regions; ++i) {
-			lx = (map.regions[i]->lx << 5);
-			rx = (map.regions[i]->rx << 5) + 31;
-			ty = (map.regions[i]->ty << 5);
-			by = (map.regions[i]->by << 5) + 31;
-			int	test = 0;
-			if (lx > rx) {
-				if (player->x >= lx && player->x <= (map.width << 4)) test = -1;
-				else if (player->x >= 0 && player->x <= rx) test = -1;
-				else test = 0;
-			} else {
-				if (player->x >= lx && player->x <= rx) test = -1;
-				else test = 0;
-			}
-			if (test == 0) continue;
-			if (ty > by) {
-				if (player->y >= ty && player->y <= (map.height << 4)) test = -1;
-				else if (player->y >= 0 && player->y <= by) test = -1;
-				else test = 0;
-			} else {
-				if (player->y >= ty && player->y <= by) test = -1;
-				else test = 0;
-			}
-			if (test == -1) {
-				//printf("{%d,%d,%d,%d} {%g,%g}\n", lx, ty, rx, by, screen_mx, screen_my);
-				reg = i;
-				break;
-			}
-		}
+		if ((player->flags & FLAG_THRUDOOR) == 0) {
+			int	reg = -1;
+			for (i = 0; i < map.num_regions; ++i) {
+				lx = (map.regions[i]->lx << 5);
+				rx = (map.regions[i]->rx << 5) + 31;
+				ty = (map.regions[i]->ty << 5);
+				by = (map.regions[i]->by << 5) + 31;
 
-		// We're inside a scroll-region:
-		if (reg != -1) {
-			if (lx > rx) {
-				if ((screen_mx < lx) && (screen_mx > (rx - screen_w))) {
-					if (abs(screen_mx - lx) < abs(screen_mx - (rx - screen_w)))
+				int	test = 0;
+				if (lx > rx) {
+					if (player->x >= lx && player->x <= (map.width * 32)) test = -1;
+					else if (player->x >= 0 && player->x <= rx) test = -1;
+					else test = 0;
+				} else {
+					if (player->x >= lx && player->x <= rx) test = -1;
+					else test = 0;
+				}
+				if (test == 0) continue;
+				if (ty > by) {
+					if (player->y >= ty && player->y <= (map.height * 32)) test = -1;
+					else if (player->y >= 0 && player->y <= by) test = -1;
+					else test = 0;
+				} else {
+					if (player->y >= ty && player->y <= by) test = -1;
+					else test = 0;
+				}
+				if (test == -1) {
+				/*
+					if (map.regions[i]->ty > map.regions[i]->by) {
+						draw_vline_on_screen(map.regions[i]->lx, map.regions[i]->ty, map.height, 0, 31);
+						draw_vline_on_screen(map.regions[i]->rx, map.regions[i]->ty, map.height, 31, 31);
+						draw_vline_on_screen(map.regions[i]->lx, 0, map.regions[i]->by, 0, 31);
+						draw_vline_on_screen(map.regions[i]->rx, 0, map.regions[i]->by, 31, 31);
+					} else {
+						draw_vline_on_screen(map.regions[i]->lx, map.regions[i]->ty, map.regions[i]->by, 0, 31);
+						draw_vline_on_screen(map.regions[i]->rx, map.regions[i]->ty, map.regions[i]->by, 31, 31);
+					}
+					if (map.regions[i]->lx > map.regions[i]->rx) {
+						draw_hline_on_screen(map.regions[i]->ty, map.regions[i]->lx, map.width, 31, 0);
+						draw_hline_on_screen(map.regions[i]->by, map.regions[i]->lx, map.width, 31, 31);
+						draw_hline_on_screen(map.regions[i]->ty, 0, map.regions[i]->rx, 31, 0);
+						draw_hline_on_screen(map.regions[i]->by, 0, map.regions[i]->rx, 31, 31);
+					} else {
+						draw_hline_on_screen(map.regions[i]->ty, map.regions[i]->lx, map.regions[i]->rx, 31, 0);
+						draw_hline_on_screen(map.regions[i]->by, map.regions[i]->lx, map.regions[i]->rx, 31, 31);
+					}
+				*/
+					reg = i;
+					break;
+				}
+			}
+
+			// We're inside a scroll-region:
+			if (reg != -1) {
+				if (lx > rx) {
+					if ((screen_mx < lx) && (screen_mx > (rx - screen_w))) {
+						if (abs(screen_mx - lx) < abs(screen_mx - (rx - screen_w)))
+							screen_mx = lx;
+						else
+							screen_mx = (rx - screen_w);
+					}
+				} else {
+					if (screen_mx < lx)
 						screen_mx = lx;
-					else
+					if (screen_mx > (rx - screen_w))
 						screen_mx = (rx - screen_w);
 				}
-			} else {
-				if (screen_mx < lx)
-					screen_mx = lx;
-				if (screen_mx > (rx - screen_w))
-					screen_mx = (rx - screen_w);
-			}
-			if (ty > by) {
-				if ((screen_my < ty) && (screen_my > (by - screen_h))) {
-					if (abs(screen_my - ty) < abs(screen_my - (by - screen_h)))
+				if (ty > by) {
+					if ((screen_my < ty) && (screen_my > (by - screen_h))) {
+						if (abs(screen_my - ty) < abs(screen_my - (by - screen_h)))
+							screen_my = ty;
+						else
+							screen_my = (by - screen_h);
+					}
+				} else {
+					if (screen_my < ty)
 						screen_my = ty;
-					else
+					if (screen_my > (by - screen_h))
 						screen_my = (by - screen_h);
 				}
-			} else {
-				if (screen_my < ty)
-					screen_my = ty;
-				if (screen_my > (by - screen_h))
-					screen_my = (by - screen_h);
 			}
 		}
 
