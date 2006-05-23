@@ -1,35 +1,35 @@
 #!/bin/sh
 cd bmgame
-make -f Makefile.win
+make
 cd ../engine
-make -f Makefile.win
+make
 cd ../mapconverter
-make -f Makefile.win
+make
 cd ../mapeditor
-make -f Makefile.win
+make
 cd ../game/common
-make -f Makefile.win
+make
 cd ../common_dungeon
-make -f Makefile.win
+make
 cd ../map00
-make -f Makefile.win
+make
 cd ../map01
-make -f Makefile.win
+make
 cd ../map02
-make -f Makefile.win
+make
 cd ../map03
-make -f Makefile.win
+make
 cd ../map04
-make -f Makefile.win
+make
 cd ../map05
-make -f Makefile.win
+make
 cd ../map06
-make -f Makefile.win
+make
 cd ../map07
-make -f Makefile.win
+make
 cd ../map08
-make -f Makefile.win
+make
 cd ../map09
-make -f Makefile.win
+make
 cd ../map0C
-make -f Makefile.win
+make

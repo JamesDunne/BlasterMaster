@@ -254,7 +254,7 @@ int LoadROM(char *fname) {
 	for (i=5; i<10; ++i)
 	{
 		fseek(nesrom, leveloffsets[i<<2], SEEK_SET);
-			
+
 		paletteofs[i] = (ReadUInt16() - 0x8000) + 0x4010;
 		colormapofs[i] = (ReadUInt16() - 0x8000) + 0x4010;
 		leveloffsets[(i<<2)+0] = (ReadUInt16() - 0x8000) + 0x4010;
@@ -326,12 +326,19 @@ int LoadROM(char *fname) {
 		fread(&gateways[i].yb, 1, 1, nesrom);
 	}
 
+	// 0x1C5B2-0x1C5C1 = boss-defeat relocation points (X,Y) pairs - 8 jason levels
+	// 0x1CA4B-0x1CA5A = restart points (X,Y) pairs - 8 tank levels
+
 	return 0;
 }
 
 // Map stuff:
 
 void Uncompress2x2(Uint8 *tmap, int tx, int ty, Uint8 t) {
+	tx -= 2;
+	ty -= 2;
+	if (tx < 0) tx += map.width;
+	if (ty < 0) ty += map.width;
 	tmap[(ty << 7) | tx] = t;
 }
 
@@ -519,8 +526,8 @@ void ConvertMap(int l, int n, int numtex) {
 		if (gateways[i].levela == revlev) {
 			int	lb = ((gateways[i].levelb + 8) % 16);
 			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
-			map.doors[m]->x = gateways[i].xa;
-			map.doors[m]->y = gateways[i].ya;
+			map.doors[m]->x = wrap_x(gateways[i].xa - 2);
+			map.doors[m]->y = wrap_y(gateways[i].ya - 2);
 			map.doors[m]->tag = i+1;
 			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
 			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
@@ -533,8 +540,8 @@ void ConvertMap(int l, int n, int numtex) {
 		if (gateways[i].levelb == revlev) {
 			int	la = ((gateways[i].levela + 8) % 16);
 			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
-			map.doors[m]->x = gateways[i].xb;
-			map.doors[m]->y = gateways[i].yb;
+			map.doors[m]->x = wrap_x(gateways[i].xb - 2);
+			map.doors[m]->y = wrap_y(gateways[i].yb - 2);
 			map.doors[m]->tag = i+1;
 			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
 			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
@@ -546,6 +553,7 @@ void ConvertMap(int l, int n, int numtex) {
 		}
 	}
 
+#if 0
 	// Create the scroll region map:
 	printf("\n");
 	for (y = 0; y < 8; ++y) {
@@ -582,6 +590,7 @@ void ConvertMap(int l, int n, int numtex) {
 		}
 	}
 	printf("+\n");
+#endif
 
 	// Find extents of each scroll region:
 
@@ -662,11 +671,15 @@ void ConvertMap(int l, int n, int numtex) {
 					map.num_regions++;
 					map.regions = realloc(map.regions, sizeof(mapregion_t *) * map.num_regions);
 					map.regions[map.num_regions - 1] = calloc(sizeof(mapregion_t), 1);
-					map.regions[map.num_regions - 1]->lx = wrap_x(lx*16+2);
-					map.regions[map.num_regions - 1]->ty = wrap_y(ty*16+2);
-					map.regions[map.num_regions - 1]->rx = wrap_x(rx*16+15+2);
-					map.regions[map.num_regions - 1]->by = wrap_y(by*16+15+2);
-					printf("{%d, %d} to {%d, %d}\n", wrap_x(lx*16+2), wrap_y(ty*16+2), wrap_x(rx*16+15+2), wrap_y(by*16+15+2));
+					map.regions[map.num_regions - 1]->lx = lx*16;
+					map.regions[map.num_regions - 1]->ty = ty*16;
+					map.regions[map.num_regions - 1]->rx = rx*16+15;
+					map.regions[map.num_regions - 1]->by = by*16+15;
+					printf("{%d, %d} to {%d, %d}\n",
+						map.regions[map.num_regions - 1]->lx,
+						map.regions[map.num_regions - 1]->ty,
+						map.regions[map.num_regions - 1]->rx,
+						map.regions[map.num_regions - 1]->by);
 					break;
 				}
 				//printf("reset at %d,%d back to %d,%d\n", x, y, sx, sy);
@@ -687,15 +700,15 @@ void ConvertMap(int l, int n, int numtex) {
 	if (l == 0) {
 		map.entities[0] = calloc(sizeof(mapentity_t), 1);
 		map.entities[0]->class = 0xF0;			// CLASS_TANK
-		map.entities[0]->x = 0x17 << 5;
-		map.entities[0]->y = 0x37 << 5;
+		map.entities[0]->x = (0x18 - 2) << 5;
+		map.entities[0]->y = (0x39 - 2) << 5;
 	}
 
 	for (i=0; i<numetys; ++i) {
 		map.entities[i+extra] = calloc(sizeof(mapentity_t), 1);
 		map.entities[i+extra]->class = etyclass[i];
-		map.entities[i+extra]->x = (int)(etyx[i]) << 5;
-		map.entities[i+extra]->y = (int)(etyy[i]) << 5;
+		map.entities[i+extra]->x = wrap_x(etyx[i] - 2) << 5;
+		map.entities[i+extra]->y = wrap_x(etyy[i] - 2) << 5;
 #if 0
 		if (etyclass[i] == 0xFF) {
 			fprintf(stderr, "Marker data: 0x%02X, 0x%02X\n", etyx[i], etyy[i]);
@@ -863,10 +876,10 @@ void SaveTextures() {
 	chmod("textures", 0755);
 	mkdir("maps");
 	chmod("maps", 0755);
-	
+
 	// Palette lookup for sprites:  (I should read these from the ROM instead
 	// but I'll have to find them first.... dammit)
-	unsigned char sprpalette[16] = 
+	unsigned char sprpalette[16] =
 		{0x0F, 0x30, 0x15, 0x0F,		// Stage 1
 		 0x0F, 0x30, 0x00, 0x0F,
 		 0x0F, 0x3B, 0x1B, 0x0F,
@@ -975,7 +988,7 @@ void SaveTextures() {
 		sprintf(tempf, "textures/boss%02X%%X.png", n + 8);
 		SAVE_TEXTURE(tempf, sprite, mappalette, 0, 0)
 	}
-	
+
 	// Save 8 level background tilesets:
 	for (n=0; n<16; ++n) {
 		level = n;

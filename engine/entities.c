@@ -506,13 +506,13 @@ void process_entities() {
 
 		// Scroll:
 		if ( test_map_x_gt(player->x, screen_mx + scroll_right) )
-			screen_mx = wrap_map_coord_x(player->x - scroll_right);
+			screen_mx = (player->x - scroll_right);
 		if ( test_map_x_lt(player->x, screen_mx + scroll_left) )
-			screen_mx = wrap_map_coord_x(player->x - scroll_left);
+			screen_mx = (player->x - scroll_left);
 		if ( test_map_y_gt(player->y, screen_my + scroll_bottom) )
-			screen_my = wrap_map_coord_y(player->y - scroll_bottom);
+			screen_my = (player->y - scroll_bottom);
 		if ( test_map_y_lt(player->y, screen_my + scroll_top) )
-			screen_my = wrap_map_coord_y(player->y - scroll_top);
+			screen_my = (player->y - scroll_top);
 
 		// Limit scrolling to scroll-regions:
 		reg = -1;
@@ -549,30 +549,30 @@ void process_entities() {
 		// We're inside a scroll-region:
 		if (reg != -1) {
 			if (lx > rx) {
-				if ((screen_mx < lx) && (screen_mx > wrap_map_coord_x(rx - screen_w))) {
-					if (abs(screen_mx - lx) < abs(screen_mx - wrap_map_coord_x(rx - screen_w)))
+				if ((screen_mx < lx) && (screen_mx > (rx - screen_w))) {
+					if (abs(screen_mx - lx) < abs(screen_mx - (rx - screen_w)))
 						screen_mx = lx;
 					else
-						screen_mx = wrap_map_coord_x(rx - screen_w);
+						screen_mx = (rx - screen_w);
 				}
 			} else {
 				if (screen_mx < lx)
 					screen_mx = lx;
-				if (screen_mx > wrap_map_coord_x(rx - screen_w))
-					screen_mx = wrap_map_coord_x(rx - screen_w);
+				if (screen_mx > (rx - screen_w))
+					screen_mx = (rx - screen_w);
 			}
 			if (ty > by) {
-				if ((screen_my < ty) && (screen_my > wrap_map_coord_y(by - screen_h))) {
-					if (abs(screen_my - ty) < abs(screen_my - wrap_map_coord_y(by - screen_h)))
+				if ((screen_my < ty) && (screen_my > (by - screen_h))) {
+					if (abs(screen_my - ty) < abs(screen_my - (by - screen_h)))
 						screen_my = ty;
 					else
-						screen_my = wrap_map_coord_y(by - screen_h);
+						screen_my = (by - screen_h);
 				}
 			} else {
 				if (screen_my < ty)
 					screen_my = ty;
-				if (screen_my > wrap_map_coord_y(by - screen_h))
-					screen_my = wrap_map_coord_y(by - screen_h);
+				if (screen_my > (by - screen_h))
+					screen_my = (by - screen_h);
 			}
 		}
 
