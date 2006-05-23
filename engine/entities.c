@@ -405,7 +405,7 @@ void bounds_check(entity self) {
 }
 
 void process_entities() {
-	int		j, m, goodent;
+	int		i, reg, j, m, goodent;
 	fixed	x, y, x1, y1, x2, y2;
 	entity	e;
 
@@ -474,6 +474,9 @@ void process_entities() {
 	}
 
 	if (player) {
+		int	lx, rx;
+		int	ty, by;
+
 		e = (entity)player;
 
 		if (!game_paused) {
@@ -504,16 +507,74 @@ void process_entities() {
 		// Scroll:
 		if ( test_map_x_gt(player->x, screen_mx + scroll_right) )
 			screen_mx = wrap_map_coord_x(player->x - scroll_right);
-			//screen_mx = player->x - scroll_right;
 		if ( test_map_x_lt(player->x, screen_mx + scroll_left) )
 			screen_mx = wrap_map_coord_x(player->x - scroll_left);
-			//screen_mx = player->x - scroll_left;
 		if ( test_map_y_gt(player->y, screen_my + scroll_bottom) )
 			screen_my = wrap_map_coord_y(player->y - scroll_bottom);
-			//screen_my = player->y - scroll_bottom;
 		if ( test_map_y_lt(player->y, screen_my + scroll_top) )
 			screen_my = wrap_map_coord_y(player->y - scroll_top);
-			//screen_my = player->y - scroll_top;
+
+		// Limit scrolling to scroll-regions:
+		reg = -1;
+		for (i = 0; i < map.num_regions; ++i) {
+			lx = (map.regions[i]->lx << 5);
+			rx = (map.regions[i]->rx << 5) + 31;
+			ty = (map.regions[i]->ty << 5);
+			by = (map.regions[i]->by << 5) + 31;
+			int	test = 0;
+			if (lx > rx) {
+				if (player->x >= lx && player->x <= (map.width << 4)) test = -1;
+				else if (player->x >= 0 && player->x <= rx) test = -1;
+				else test = 0;
+			} else {
+				if (player->x >= lx && player->x <= rx) test = -1;
+				else test = 0;
+			}
+			if (test == 0) continue;
+			if (ty > by) {
+				if (player->y >= ty && player->y <= (map.height << 4)) test = -1;
+				else if (player->y >= 0 && player->y <= by) test = -1;
+				else test = 0;
+			} else {
+				if (player->y >= ty && player->y <= by) test = -1;
+				else test = 0;
+			}
+			if (test == -1) {
+				//printf("{%d,%d,%d,%d} {%g,%g}\n", lx, ty, rx, by, screen_mx, screen_my);
+				reg = i;
+				break;
+			}
+		}
+
+		// We're inside a scroll-region:
+		if (reg != -1) {
+			if (lx > rx) {
+				if ((screen_mx < lx) && (screen_mx > wrap_map_coord_x(rx - screen_w))) {
+					if (abs(screen_mx - lx) < abs(screen_mx - wrap_map_coord_x(rx - screen_w)))
+						screen_mx = lx;
+					else
+						screen_mx = wrap_map_coord_x(rx - screen_w);
+				}
+			} else {
+				if (screen_mx < lx)
+					screen_mx = lx;
+				if (screen_mx > wrap_map_coord_x(rx - screen_w))
+					screen_mx = wrap_map_coord_x(rx - screen_w);
+			}
+			if (ty > by) {
+				if ((screen_my < ty) && (screen_my > wrap_map_coord_y(by - screen_h))) {
+					if (abs(screen_my - ty) < abs(screen_my - wrap_map_coord_y(by - screen_h)))
+						screen_my = ty;
+					else
+						screen_my = wrap_map_coord_y(by - screen_h);
+				}
+			} else {
+				if (screen_my < ty)
+					screen_my = ty;
+				if (screen_my > wrap_map_coord_y(by - screen_h))
+					screen_my = wrap_map_coord_y(by - screen_h);
+			}
+		}
 
 		// Draw this entity if it wants to be drawn:
 		call_process_func(e, draw);

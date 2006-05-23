@@ -659,7 +659,6 @@ void ConvertMap(int l, int n, int numtex) {
 			} else {
 				if (x == sx && y == sy) {
 					//printf("stop at %d,%d\n", x, y);
-					printf("{%d, %d} to {%d, %d}\n", lx*16, ty*16, rx*16+15, by*16+15);
 					map.num_regions++;
 					map.regions = realloc(map.regions, sizeof(mapregion_t *) * map.num_regions);
 					map.regions[map.num_regions - 1] = calloc(sizeof(mapregion_t), 1);
@@ -667,6 +666,7 @@ void ConvertMap(int l, int n, int numtex) {
 					map.regions[map.num_regions - 1]->ty = wrap_y(ty*16+2);
 					map.regions[map.num_regions - 1]->rx = wrap_x(rx*16+15+2);
 					map.regions[map.num_regions - 1]->by = wrap_y(by*16+15+2);
+					printf("{%d, %d} to {%d, %d}\n", wrap_x(lx*16+2), wrap_y(ty*16+2), wrap_x(rx*16+15+2), wrap_y(by*16+15+2));
 					break;
 				}
 				//printf("reset at %d,%d back to %d,%d\n", x, y, sx, sy);

@@ -262,7 +262,7 @@ void sys_init(int argc, char **argv) {
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 
 	// Default resolution:
-	screen_w = 640; screen_h = 480;
+	screen_w = 512; screen_h = 448;
 
 	// Scan program arguments:
 	sdlflags = SDL_OPENGL;
