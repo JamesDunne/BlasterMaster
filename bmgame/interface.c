@@ -16,9 +16,6 @@ void init() {
 	// Load the level:
 	host->LoadLevel("maps/map00.bma");
 
-//	(*host->screen_mx) = 4 * 128;
-//  (*host->screen_my) = 14 * 128;
-
 	reg = -1;
 	for (i = 0; i < host->map->num_regions; ++i) {
 		lx = (host->map->regions[i]->lx << 5);
@@ -44,7 +41,6 @@ void init() {
 			else test = 0;
 		}
 		if (test == -1) {
-			//printf("{%d,%d,%d,%d} {%g,%g}\n", lx, ty, rx, by, screen_mx, screen_my);
 			reg = i;
 			break;
 		}
