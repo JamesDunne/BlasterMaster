@@ -12,7 +12,7 @@ INCS =  -I"C:/Dev-Cpp/include"  -I"../common"
 CXXINCS =  -I"C:/Dev-Cpp/include/c++/3.3.1"  -I"C:/Dev-Cpp/include/c++/3.3.1/mingw32"  -I"C:/Dev-Cpp/include/c++/3.3.1/backward"  -I"C:/Dev-Cpp/lib/gcc-lib/mingw32/3.3.1/include"  -I"C:/Dev-Cpp/include"  -I"../common" 
 BIN  = "../Map Editor.exe"
 CXXFLAGS = $(CXXINCS)  
-CFLAGS = $(INCS) -Dmain=SDL_main  
+CFLAGS = $(INCS) -Dmain=SDL_main  -g
 
 .PHONY: all all-before all-after clean clean-custom
 

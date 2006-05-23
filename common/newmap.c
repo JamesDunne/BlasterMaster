@@ -58,6 +58,8 @@ int LoadMap(const char *filename) {
     // Free the last map loaded (if exists):  (safe to call regardless)
     FreeMap();
 
+	map.filename = filename;
+
 	// Read chunks and ignore unknown ones:
 	while (!feof(mapfile)) {
 		// Read the chunk type and size:
@@ -251,6 +253,8 @@ int SaveMap(const char *filename) {
     	fprintf(stderr, "Could not open '%s' for writing\n", filename);
 		return -1;
     }
+
+	map.filename = filename;
 
     // Write the signature:
     sig = MAP_SIGNATURE;

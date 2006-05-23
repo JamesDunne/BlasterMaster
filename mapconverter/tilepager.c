@@ -663,10 +663,10 @@ void ConvertMap(int l, int n, int numtex) {
 					map.num_regions++;
 					map.regions = realloc(map.regions, sizeof(mapregion_t *) * map.num_regions);
 					map.regions[map.num_regions - 1] = calloc(sizeof(mapregion_t), 1);
-					map.regions[map.num_regions - 1]->lx = lx*16;
-					map.regions[map.num_regions - 1]->ty = ty*16;
-					map.regions[map.num_regions - 1]->rx = rx*16+15;
-					map.regions[map.num_regions - 1]->by = by*16+15;
+					map.regions[map.num_regions - 1]->lx = wrap_x(lx*16+2);
+					map.regions[map.num_regions - 1]->ty = wrap_y(ty*16+2);
+					map.regions[map.num_regions - 1]->rx = wrap_x(rx*16+15+2);
+					map.regions[map.num_regions - 1]->by = wrap_y(by*16+15+2);
 					break;
 				}
 				//printf("reset at %d,%d back to %d,%d\n", x, y, sx, sy);

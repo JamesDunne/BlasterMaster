@@ -300,6 +300,48 @@ void wMain_Click(TWindow *self, int mX, int mY, int btn) {
 	}
 }
 
+void draw_vline_on_screen(int x, int y1, int y2, int offx, int offy) {
+	int	vx, vy1, vy2;
+
+	if ((x < screen_mx) || (x > (screen_mx + screen_w))) return;
+
+	vx = ((x - screen_mx) << 4) + offx;
+	vy1 = ((y1 - screen_my) << 4);
+	vy2 = ((y2 - screen_my) << 4) + offy;
+
+	if (vy1 < 0) vy1 = 0;
+	if (vy2 > (screen_h << 4)) vy2 = screen_h << 4;
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glColor4f(0.7, 0.12, 0.5, 0.6);
+	glLineWidth(3.0);
+	glBegin(GL_LINES);
+		glVertex2i(vx, vy1);
+		glVertex2i(vx, vy2);
+	glEnd();
+}
+
+void draw_hline_on_screen(int y, int x1, int x2, int offx, int offy) {
+	int	vy, vx1, vx2;
+
+	if ((y < screen_my) || (y > (screen_my + screen_h))) return;
+
+	vy = ((y - screen_my) << 4) + offy;
+	vx1 = ((x1 - screen_mx) << 4);
+	vx2 = ((x2 - screen_mx) << 4) + offx;
+
+	if (vx1 < 0) vx1 = 0;
+	if (vx2 > (screen_w << 4)) vx2 = screen_w << 4;
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glColor4f(0.7, 0.12, 0.5, 0.6);
+	glLineWidth(3.0);
+	glBegin(GL_LINES);
+		glVertex2i(vx1, vy);
+		glVertex2i(vx2, vy);
+	glEnd();
+}
+
 void wMain_Paint(TWindow *self) {
 	int	x, y, i, t;
 	int	mx, my;
@@ -318,6 +360,30 @@ void wMain_Paint(TWindow *self) {
 
 	// Move above the map...
 	glTranslatef(0, 0, 0.1);
+
+	// Draw regions:
+	if (map.num_regions > 0) {
+		for (i=0; i<map.num_regions; ++i) {
+			if (map.regions[i]->ty > map.regions[i]->by) {
+				draw_vline_on_screen(map.regions[i]->lx, map.regions[i]->ty, map.height, 0, 15);
+				draw_vline_on_screen(map.regions[i]->rx, map.regions[i]->ty, map.height, 15, 15);
+				draw_vline_on_screen(map.regions[i]->lx, 0, map.regions[i]->by, 0, 15);
+				draw_vline_on_screen(map.regions[i]->rx, 0, map.regions[i]->by, 15, 15);
+			} else {
+				draw_vline_on_screen(map.regions[i]->lx, map.regions[i]->ty, map.regions[i]->by, 0, 15);
+				draw_vline_on_screen(map.regions[i]->rx, map.regions[i]->ty, map.regions[i]->by, 15, 15);
+			}
+			if (map.regions[i]->lx > map.regions[i]->rx) {
+				draw_hline_on_screen(map.regions[i]->ty, map.regions[i]->lx, map.width, 15, 0);
+				draw_hline_on_screen(map.regions[i]->by, map.regions[i]->lx, map.width, 15, 15);
+				draw_hline_on_screen(map.regions[i]->ty, 0, map.regions[i]->rx, 15, 0);
+				draw_hline_on_screen(map.regions[i]->by, 0, map.regions[i]->rx, 15, 15);
+			} else {
+				draw_hline_on_screen(map.regions[i]->ty, map.regions[i]->lx, map.regions[i]->rx, 15, 0);
+				draw_hline_on_screen(map.regions[i]->by, map.regions[i]->lx, map.regions[i]->rx, 15, 15);
+			}
+		}
+	}
 
 	// Draw door selector:
 	if ((map.num_doors > 0) && (door_selected >= 0) && (door_selected < map.num_doors)) {

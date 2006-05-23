@@ -27,6 +27,8 @@ typedef struct mapentity_t {
 } mapentity_t;
 
 typedef struct map_t {
+	char	*filename;
+
 	Uint8	numtextures;
 	char	**texturefile;
 	char	*music_filename;

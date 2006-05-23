@@ -47,6 +47,7 @@ void Tank_Death(entity e) {
 void Tank_DoWarp(entity e) {
 	DEFINE_SELF(e_tank);
 	int	i, j;
+	int	same = 0;
 	char	*filename;
 
 	// Load the level and then position the tank:
@@ -54,13 +55,21 @@ void Tank_DoWarp(entity e) {
 	i = self->warp_door;
 	// If we have to, load up a different level:
 	if (host->map->doors[i]->targetmap != NULL) {
-		filename = calloc(strlen(host->map->doors[i]->targetmap)+1, 1);
-		strcpy(filename, host->map->doors[i]->targetmap);
-		host->LoadLevel(filename);
-		free(filename);
-		// Search for the tag we have:
+		if (strcmp(host->map->filename, host->map->doors[i]->targetmap) == 0) {
+			same = -1;
+		} else {
+			filename = calloc(strlen(host->map->doors[i]->targetmap)+1, 1);
+			strcpy(filename, host->map->doors[i]->targetmap);
+			host->LoadLevel(filename);
+			free(filename);
+		}
+	} else {
+		same = -1;
+	}
+	if (same) {
+		// Search in the same level for the _other_ tag:
 		for (j=0; j<host->map->num_doors; ++j)
-			if (host->map->doors[j]->tag == self->warp_tag) {
+			if ((i != j) && (host->map->doors[j]->tag == self->warp_tag)) {
 				e->x = host->map->doors[j]->x * 32.0 + 8;
 				e->y = host->map->doors[j]->y * 32.0 + 15;
 				if (host->map->mapflags[host->gettileat(e->x + e->mcrx1, e->y)] & MAPFLAG_SOLID)
@@ -75,9 +84,9 @@ void Tank_DoWarp(entity e) {
 				break;
 			}
 	} else {
-		// Search in the same level for the _other_ tag:
+		// Search for the tag we have:
 		for (j=0; j<host->map->num_doors; ++j)
-			if ((i != j) && (host->map->doors[j]->tag == self->warp_tag)) {
+			if (host->map->doors[j]->tag == self->warp_tag) {
 				e->x = host->map->doors[j]->x * 32.0 + 8;
 				e->y = host->map->doors[j]->y * 32.0 + 15;
 				if (host->map->mapflags[host->gettileat(e->x + e->mcrx1, e->y)] & MAPFLAG_SOLID)
