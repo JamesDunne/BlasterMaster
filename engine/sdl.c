@@ -183,12 +183,17 @@ void LoadTexture(int page, const char *filename) {
 		exit(-1);
 		return;
 	}
+	fgsprites[page] = SDL_ConvertSurface(
+		fgsprites[page],
+		fgsprites[page]->format,
+		SDL_HWACCEL
+	);
 
 	// Create a h-flipped version:
 	fgspritesh[page] = SDL_ConvertSurface(
 		fgsprites[page],
 		fgsprites[page]->format,
-		0
+		SDL_HWACCEL
 	);
 	SDL_LockSurface(fgspritesh[page]);
 	px = (unsigned long *)fgspritesh[page]->pixels;
@@ -211,7 +216,7 @@ void LoadTexture(int page, const char *filename) {
 	fgspritesv[page] = SDL_ConvertSurface(
 		fgsprites[page],
 		fgsprites[page]->format,
-		0
+		SDL_HWACCEL
 	);
 	SDL_LockSurface(fgspritesv[page]);
 	px = (unsigned long *)fgspritesv[page]->pixels;
@@ -233,7 +238,7 @@ void LoadTexture(int page, const char *filename) {
 	fgspriteshv[page] = SDL_ConvertSurface(
 		fgsprites[page],
 		fgsprites[page]->format,
-		0
+		SDL_HWACCEL
 	);
 	SDL_LockSurface(fgspriteshv[page]);
 	px = (unsigned long *)fgspriteshv[page]->pixels;
