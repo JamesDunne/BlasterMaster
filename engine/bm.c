@@ -289,8 +289,8 @@ void gameloop() {
 	// Set screen dimensions:
 	scroll_left = (screen_w * 0.3125);
 	scroll_right = (screen_w * 0.6875);
-	scroll_top = (screen_h * 0.1875);
-	scroll_bottom = (screen_h * 0.8125);
+	scroll_top = (screen_h * 0.3125);
+	scroll_bottom = (screen_h * 0.6875);
 	quit = 0;
 	game_paused = 0;
 
