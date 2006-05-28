@@ -4,7 +4,6 @@
 	<Workspace title="Blaster Master">
 		<Project filename="bmgame\bmgame.cbp"/>
 		<Project filename="game\common\common.cbp"/>
-		<Project filename="engine\Blaster Master.cbp" active="1"/>
 		<Project filename="game\common_dungeon\Common Jason.cbp"/>
 		<Project filename="game\map00\map00.cbp"/>
 		<Project filename="game\map01\map01.cbp"/>
@@ -19,5 +18,6 @@
 		<Project filename="game\map0C\map0C.cbp"/>
 		<Project filename="mapconverter\Map Extractor.cbp"/>
 		<Project filename="mapeditor\Map Editor.cbp"/>
+		<Project filename="Blaster Master.cbp" active="1"/>
 	</Workspace>
 </CodeBlocks_workspace_file>
