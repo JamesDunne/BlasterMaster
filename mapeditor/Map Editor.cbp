@@ -13,12 +13,13 @@
 				<Option working_dir="."/>
 				<Option object_output=".objs"/>
 				<Option deps_output=".deps"/>
-				<Option type="1"/>
+				<Option type="0"/>
 				<Option compiler="0"/>
-				<Option projectResourceIncludeDirsRelation="1"/>
+				<Option projectResourceIncludeDirsRelation="0"/>
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-mwindows"/>
 			<Add option="-Dmain=SDL_main"/>
 		</Compiler>
 		<Linker>
@@ -41,6 +42,10 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="bm_game.c">
+			<Option compilerVar="CC"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="bmedit.c">
 			<Option compilerVar="CC"/>
 			<Option target="default"/>
@@ -51,8 +56,14 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
-		<Unit filename="bm_game.c">
+		<Unit filename="font.c">
 			<Option compilerVar="CC"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="font.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="glwindows.c">
@@ -70,16 +81,6 @@
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="opengl.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="font.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="font.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>

@@ -25,6 +25,9 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-march=athlon-xp"/>
+			<Add option="-fexpensive-optimizations"/>
+			<Add option="-O3"/>
 			<Add option="-DBUILD_DLL"/>
 		</Compiler>
 		<Unit filename="Bullet.c">

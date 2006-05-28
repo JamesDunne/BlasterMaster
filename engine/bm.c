@@ -119,7 +119,7 @@ int LoadLevel(const char *reqmapfilename) {
 			break;
 		curr = curr->next;
 	}
-	
+
 	// No cached copy, so go ahead and load the map's entities:
 	if (curr == NULL) {
 // 		fprintf(stderr, "not found!  loading default entities...");
@@ -151,14 +151,14 @@ int LoadLevel(const char *reqmapfilename) {
 		// Yeah, let's load the cached copy:
 // 		fprintf(stderr, "found at 0x%08lp!\n", curr);
 // 		fprintf(stderr, "  Loading %d cached entities\n", curr->count);
-		
+
 		// Copy over the saved list, but don't overwrite the player:
 		for (i=0; i<=curr->count; ++i) if (entities[i] != (entity) player) {
 			entities[i] = curr->state[i];
 		}
 		last_entity = curr->count;
 	}
-	
+
 	strcpy(last_mapfilename, reqmapfilename);
 	level_changed = 1;
 
@@ -189,7 +189,7 @@ void create_host() {
 	sendfunction(put_bgtile);
 
 	sendfunction(Draw2x2BGTile);
-	
+
 	sendfunction(LoadTexture);
 
 	sendfunction(e_spawn);
@@ -225,7 +225,7 @@ void create_host() {
 	sendvariable(world);
 	host->entities = entities;
 	sendvariable(last_entity);
-	
+
 	// Send address of acceleration scalar value (from joystick)  where (0 <= x <= 1.0):
 	host->accel_scale = &accel_scale;
 
@@ -287,10 +287,10 @@ void gameloop() {
 	sound_available = sndInit();
 
 	// Set screen dimensions:
-	scroll_left = (screen_w * 0.3125);
-	scroll_right = (screen_w * 0.6875);
-	scroll_top = (screen_h * 0.3125);
-	scroll_bottom = (screen_h * 0.6875);
+	scroll_left = (screen_w * 0.4);
+	scroll_right = (screen_w * 0.6);
+	scroll_top = (screen_h * 0.4);
+	scroll_bottom = (screen_h * 0.6);
 	quit = 0;
 	game_paused = 0;
 
@@ -373,7 +373,7 @@ void gameloop() {
 		}
 
 	free(entities);
-	
+
 	UnloadGame(&client_library);
 	UnloadGame(&game_library);
 
