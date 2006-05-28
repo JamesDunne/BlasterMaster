@@ -640,6 +640,9 @@ void process_entities() {
 						screen_my = (by - screen_h);
 				}
 			}
+
+			screen_mx = wrap_map_coord_x(screen_mx);
+			screen_my = wrap_map_coord_y(screen_my);
 		}
 
 		// Draw this entity if it wants to be drawn:

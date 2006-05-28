@@ -1,44 +1,23 @@
-# Project: Blaster Master
-# Makefile created by Dev-C++ 4.9.9.0
-
 CPP  = g++.exe
 CC   = gcc.exe
-WINDRES = windres.exe
-RES  = 
-OBJ  = bm.o bm_game.o entities.o sdl.o sound.o ../common/newmap.o $(RES)
-LINKOBJ  = bm.o bm_game.o entities.o sdl.o sound.o ../common/newmap.o $(RES)
-LIBS =  -L"C:/Dev-Cpp/lib" -mwindows -lmingw32 -lopengl32 -lglu32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -lz
-INCS =  -I"C:/Dev-Cpp/include"  -I"../common" 
-CXXINCS =  -I"C:/Dev-Cpp/include/c++/3.3.1"  -I"C:/Dev-Cpp/include/c++/3.3.1/mingw32"  -I"C:/Dev-Cpp/include/c++/3.3.1/backward"  -I"C:/Dev-Cpp/lib/gcc-lib/mingw32/3.3.1/include"  -I"C:/Dev-Cpp/include"  -I"../common" 
+
+INCS = -I"../common"
+
+OBJ  = bm.o bm_game.o entities.o opengl.o sound.o ../common/newmap.o
 BIN  = "../Blaster Master.exe"
-CXXFLAGS = $(CXXINCS) -fexpensive-optimizations
+
+LIBS = -mwindows -lmingw32 -lopengl32 -lglu32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -lz
 CFLAGS = $(INCS) -Dmain=SDL_main -g
 
-.PHONY: all all-before all-after clean clean-custom
+.PHONY:	clean deps
 
-all: all-before "../Blaster Master.exe" all-after
+$(BIN):	deps $(OBJ)
+	$(CC) $(OBJ) -o $(BIN) $(LIBS)
 
+clean:
+	rm -f $(OBJ)
 
-clean: clean-custom
-	rm -f $(OBJ) $(BIN)
+deps:
+	$(CC) $(CFLAGS) -MM *.c > dependencies
 
-$(BIN): $(OBJ)
-	$(CC) $(LINKOBJ) -o "..\Blaster Master.exe" $(LIBS)
-
-bm.o: bm.c
-	$(CC) -c bm.c -o bm.o $(CFLAGS)
-
-bm_game.o: bm_game.c
-	$(CC) -c bm_game.c -o bm_game.o $(CFLAGS)
-
-entities.o: entities.c
-	$(CC) -c entities.c -o entities.o $(CFLAGS)
-
-sdl.o: sdl.c
-	$(CC) -c sdl.c -o sdl.o $(CFLAGS)
-
-sound.o: sound.c
-	$(CC) -c sound.c -o sound.o $(CFLAGS)
-
-../common/newmap.o: ../common/newmap.c
-	$(CC) -c ../common/newmap.c -o ../common/newmap.o $(CFLAGS)
+-include dependencies

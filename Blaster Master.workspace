@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!DOCTYPE CodeBlocks_workspace_file>
+<CodeBlocks_workspace_file>
+	<Workspace title="Blaster Master">
+		<Project filename="bmgame\bmgame.cbp"/>
+		<Project filename="game\common\common.cbp"/>
+		<Project filename="engine\Blaster Master.cbp" active="1"/>
+		<Project filename="game\common_dungeon\Common Jason.cbp"/>
+		<Project filename="game\map00\map00.cbp"/>
+		<Project filename="game\map01\map01.cbp"/>
+		<Project filename="game\map02\map02.cbp"/>
+		<Project filename="game\map03\map03.cbp"/>
+		<Project filename="game\map04\map04.cbp"/>
+		<Project filename="game\map05\map05.cbp"/>
+		<Project filename="game\map06\map06.cbp"/>
+		<Project filename="game\map07\map07.cbp"/>
+		<Project filename="game\map08\map08.cbp"/>
+		<Project filename="game\map09\map09.cbp"/>
+		<Project filename="game\map0C\map0C.cbp"/>
+	</Workspace>
+</CodeBlocks_workspace_file>

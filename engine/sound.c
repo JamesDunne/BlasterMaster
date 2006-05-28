@@ -38,6 +38,9 @@ int	sndPrecache(const char *filename) {
 	sound = last_free;
 	precached_sounds[sound] = calloc(sizeof(sound_precache_t), 1);
 	precached_sounds[sound]->sound = Mix_LoadWAV(filename);
+	if (precached_sounds[sound]->sound == NULL) {
+		fprintf(stderr, "Mix_LoadWAV(\"%s\"): %s\n", filename, Mix_GetError());
+	}
 	precached_sounds[sound]->filename = calloc(strlen(filename)+1, 1);
 	strcpy(precached_sounds[sound]->filename, filename);
 

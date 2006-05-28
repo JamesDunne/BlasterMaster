@@ -9,3 +9,7 @@
 
 	unsigned long	items;
 
+	unsigned long	predoorx, predoory;
+	unsigned long	postdoorx, postdoory;
+	fixed			predoormx, predoormy;
+	fixed			postdoormx, postdoormy;

@@ -564,6 +564,16 @@ void Tank_Touched(entity e, entity o) {
 				self->flags |= FLAG_NOFRICTION;
 				self->flags |= FLAG_NOGRAVITY;
 
+				self->predoorx = self->x;
+				self->predoory = self->y;
+				self->predoormx = (*host->screen_mx);
+				self->predoormy = (*host->screen_my);
+
+				self->postdoorx = self->x;
+				self->postdoory = self->y;
+				self->postdoormx = (*host->screen_mx);
+				self->postdoormy = (*host->screen_my);
+
 				// Not looking up anymore:
 				self->lookup_frame = 0;
 				self->flags &= ~(FLAG_LOOKUP);

@@ -1,45 +1,27 @@
-# Project: map04
-# Makefile created by Dev-C++ 4.9.9.0
-
+# DLL makefile
 CPP  = g++.exe
 CC   = gcc.exe
-WINDRES = windres.exe
-RES  = 
-OBJ  = bm_game.o Hermit.o interface.o Pterodactyl.o Swimmer.o $(RES)
-LINKOBJ  = bm_game.o Hermit.o interface.o Pterodactyl.o Swimmer.o $(RES)
-LIBS =  -L"C:/Dev-Cpp/lib" -lopengl32  
-INCS =  -I"C:/Dev-Cpp/include"  -I"../../common"  -I"../common" 
-CXXINCS =  -I"C:/Dev-Cpp/include/c++/3.3.1"  -I"C:/Dev-Cpp/include/c++/3.3.1/mingw32"  -I"C:/Dev-Cpp/include/c++/3.3.1/backward"  -I"C:/Dev-Cpp/lib/gcc-lib/mingw32/3.3.1/include"  -I"C:/Dev-Cpp/include"  -I"../../common"  -I"../common" 
-BIN  = ../map04.dll
-CXXFLAGS = $(CXXINCS)   -fexpensive-optimizations -O2
-CFLAGS = $(INCS)   -fexpensive-optimizations -O2
-
-.PHONY: all all-before all-after clean clean-custom
-
-all: all-before ../map04.dll all-after
-
-
-clean: clean-custom
-	rm -f $(OBJ) $(BIN)
-
 DLLWRAP=dllwrap.exe
+
+INCS = -I"../../common" -I"../common"
+
+OBJ  = bm_game.o Hermit.o interface.o Pterodactyl.o Swimmer.o
+BIN  = "../map04.dll"
 DEFFILE=../libmap04.def
 STATICLIB=../libmap04.a
 
-$(BIN): $(LINKOBJ)
-	$(DLLWRAP) --output-def $(DEFFILE) --implib $(STATICLIB) $(LINKOBJ) $(LIBS) -o $(BIN)
+LIBS = -mwindows -lopengl32
+CFLAGS = $(INCS) -g
 
-bm_game.o: bm_game.c
-	$(CC) -c bm_game.c -o bm_game.o $(CFLAGS)
+.PHONY:	clean deps
 
-Hermit.o: Hermit.c
-	$(CC) -c Hermit.c -o Hermit.o $(CFLAGS)
+$(BIN):	deps $(OBJ)
+	$(DLLWRAP) --output-def $(DEFFILE) --implib $(STATICLIB) $(OBJ) $(LIBS) -o $(BIN)
 
-interface.o: interface.c
-	$(CC) -c interface.c -o interface.o $(CFLAGS)
+clean:
+	rm -f $(OBJ)
 
-Pterodactyl.o: Pterodactyl.c
-	$(CC) -c Pterodactyl.c -o Pterodactyl.o $(CFLAGS)
+deps:
+	$(CC) $(CFLAGS) -MM *.c > dependencies
 
-Swimmer.o: Swimmer.c
-	$(CC) -c Swimmer.c -o Swimmer.o $(CFLAGS)
+-include dependencies
