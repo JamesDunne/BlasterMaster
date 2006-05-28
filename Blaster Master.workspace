@@ -17,5 +17,7 @@
 		<Project filename="game\map08\map08.cbp"/>
 		<Project filename="game\map09\map09.cbp"/>
 		<Project filename="game\map0C\map0C.cbp"/>
+		<Project filename="mapconverter\Map Extractor.cbp"/>
+		<Project filename="mapeditor\Map Editor.cbp"/>
 	</Workspace>
 </CodeBlocks_workspace_file>

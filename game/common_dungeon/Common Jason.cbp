@@ -9,7 +9,7 @@
 		<Option compiler="0"/>
 		<Build>
 			<Target title="default">
-				<Option output="sample.dll"/>
+				<Option output="..\common_dungeon.dll"/>
 				<Option working_dir="."/>
 				<Option object_output=".objs"/>
 				<Option deps_output=".deps"/>
@@ -21,6 +21,9 @@
 		<Compiler>
 			<Add option="-DBUILD_DLL"/>
 		</Compiler>
+		<Linker>
+			<Add library="opengl32"/>
+		</Linker>
 		<Unit filename="Bullet.c">
 			<Option compilerVar="CC"/>
 			<Option target="default"/>
@@ -76,16 +79,6 @@
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="RingSpawner.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="Template.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="Template.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
