@@ -76,7 +76,7 @@ entity e_findnext() {
 		e_lastfound = i;
 		return entities[i];
 	}
-	
+
 	return NULL;
 }
 
@@ -520,6 +520,7 @@ void process_entities() {
 	if (player) {
 		int	lx, rx;
 		int	ty, by;
+		int	reg = -1;
 
 		e = (entity)player;
 
@@ -548,102 +549,80 @@ void process_entities() {
 			call_process_func(e, postthink);
 		}
 
-		// Scroll:
-		if ( test_map_x_gt(player->x, screen_mx + scroll_right) )
-			screen_mx = (player->x - scroll_right);
-		if ( test_map_x_lt(player->x, screen_mx + scroll_left) )
-			screen_mx = (player->x - scroll_left);
-		if ( test_map_y_gt(player->y, screen_my + scroll_bottom) )
-			screen_my = (player->y - scroll_bottom);
-		if ( test_map_y_lt(player->y, screen_my + scroll_top) )
-			screen_my = (player->y - scroll_top);
-
-		// Limit scrolling to scroll-regions:
 		if ((player->flags & FLAG_THRUDOOR) == 0) {
-			int	reg = -1;
-			for (i = 0; i < map.num_regions; ++i) {
-				lx = (map.regions[i]->lx << 5);
-				rx = (map.regions[i]->rx << 5) + 31;
-				ty = (map.regions[i]->ty << 5);
-				by = (map.regions[i]->by << 5) + 31;
+			// Scroll:
+			if ( test_map_x_gt(player->x, screen_mx + scroll_right) )
+				screen_mx = (player->x - scroll_right);
+			if ( test_map_x_lt(player->x, screen_mx + scroll_left) )
+				screen_mx = (player->x - scroll_left);
+			if ( test_map_y_gt(player->y, screen_my + scroll_bottom) )
+				screen_my = (player->y - scroll_bottom);
+			if ( test_map_y_lt(player->y, screen_my + scroll_top) )
+				screen_my = (player->y - scroll_top);
+		}
 
-				int	test = 0;
-				if (lx > rx) {
-					if (player->x >= lx && player->x <= (map.width * 32)) test = -1;
-					else if (player->x >= 0 && player->x <= rx) test = -1;
-					else test = 0;
-				} else {
-					if (player->x >= lx && player->x <= rx) test = -1;
-					else test = 0;
-				}
-				if (test == 0) continue;
-				if (ty > by) {
-					if (player->y >= ty && player->y <= (map.height * 32)) test = -1;
-					else if (player->y >= 0 && player->y <= by) test = -1;
-					else test = 0;
-				} else {
-					if (player->y >= ty && player->y <= by) test = -1;
-					else test = 0;
-				}
-				if (test == -1) {
-				/*
-					if (map.regions[i]->ty > map.regions[i]->by) {
-						draw_vline_on_screen(map.regions[i]->lx, map.regions[i]->ty, map.height, 0, 31);
-						draw_vline_on_screen(map.regions[i]->rx, map.regions[i]->ty, map.height, 31, 31);
-						draw_vline_on_screen(map.regions[i]->lx, 0, map.regions[i]->by, 0, 31);
-						draw_vline_on_screen(map.regions[i]->rx, 0, map.regions[i]->by, 31, 31);
-					} else {
-						draw_vline_on_screen(map.regions[i]->lx, map.regions[i]->ty, map.regions[i]->by, 0, 31);
-						draw_vline_on_screen(map.regions[i]->rx, map.regions[i]->ty, map.regions[i]->by, 31, 31);
-					}
-					if (map.regions[i]->lx > map.regions[i]->rx) {
-						draw_hline_on_screen(map.regions[i]->ty, map.regions[i]->lx, map.width, 31, 0);
-						draw_hline_on_screen(map.regions[i]->by, map.regions[i]->lx, map.width, 31, 31);
-						draw_hline_on_screen(map.regions[i]->ty, 0, map.regions[i]->rx, 31, 0);
-						draw_hline_on_screen(map.regions[i]->by, 0, map.regions[i]->rx, 31, 31);
-					} else {
-						draw_hline_on_screen(map.regions[i]->ty, map.regions[i]->lx, map.regions[i]->rx, 31, 0);
-						draw_hline_on_screen(map.regions[i]->by, map.regions[i]->lx, map.regions[i]->rx, 31, 31);
-					}
-				*/
-					reg = i;
-					break;
-				}
+		for (i = 0; i < map.num_regions; ++i) {
+			lx = (map.regions[i]->lx << 5);
+			rx = (map.regions[i]->rx << 5) + 31;
+			ty = (map.regions[i]->ty << 5);
+			by = (map.regions[i]->by << 5) + 31;
+
+			int	test = 0;
+			if (lx > rx) {
+				if (player->x >= lx && player->x <= (map.width * 32)) test = -1;
+				else if (player->x >= 0 && player->x <= rx) test = -1;
+				else test = 0;
+			} else {
+				if (player->x >= lx && player->x <= rx) test = -1;
+				else test = 0;
 			}
+			if (test == 0) continue;
+			if (ty > by) {
+				if (player->y >= ty && player->y <= (map.height * 32)) test = -1;
+				else if (player->y >= 0 && player->y <= by) test = -1;
+				else test = 0;
+			} else {
+				if (player->y >= ty && player->y <= by) test = -1;
+				else test = 0;
+			}
+			if (test == -1) {
+				reg = i;
+				break;
+			}
+		}
 
-			// We're inside a scroll-region:
-			if (reg != -1) {
-				if (lx > rx) {
-					if ((screen_mx < lx) && (screen_mx > (rx - screen_w))) {
-						if (abs(screen_mx - lx) < abs(screen_mx - (rx - screen_w)))
-							screen_mx = lx;
-						else
-							screen_mx = (rx - screen_w);
-					}
-				} else {
-					if (screen_mx < lx)
+		// We're inside a scroll-region:
+		if (reg != -1) {
+			if (lx > rx) {
+				if ((screen_mx < lx) && (screen_mx > (rx - screen_w))) {
+					if (abs(screen_mx - lx) < abs(screen_mx - (rx - screen_w)))
 						screen_mx = lx;
-					if (screen_mx > (rx - screen_w))
+					else
 						screen_mx = (rx - screen_w);
 				}
-				if (ty > by) {
-					if ((screen_my < ty) && (screen_my > (by - screen_h))) {
-						if (abs(screen_my - ty) < abs(screen_my - (by - screen_h)))
-							screen_my = ty;
-						else
-							screen_my = (by - screen_h);
-					}
-				} else {
-					if (screen_my < ty)
+			} else {
+				if (screen_mx < lx)
+					screen_mx = lx;
+				if (screen_mx > (rx - screen_w))
+					screen_mx = (rx - screen_w);
+			}
+			if (ty > by) {
+				if ((screen_my < ty) && (screen_my > (by - screen_h))) {
+					if (abs(screen_my - ty) < abs(screen_my - (by - screen_h)))
 						screen_my = ty;
-					if (screen_my > (by - screen_h))
+					else
 						screen_my = (by - screen_h);
 				}
+			} else {
+				if (screen_my < ty)
+					screen_my = ty;
+				if (screen_my > (by - screen_h))
+					screen_my = (by - screen_h);
 			}
-
-			screen_mx = wrap_map_coord_x(screen_mx);
-			screen_my = wrap_map_coord_y(screen_my);
 		}
+
+		screen_mx = wrap_map_coord_x(screen_mx);
+		screen_my = wrap_map_coord_y(screen_my);
 
 		// Draw this entity if it wants to be drawn:
 		call_process_func(e, draw);

@@ -17,7 +17,7 @@ sounds_t			sounds;
 
 void init() {
 	int	i;
-	
+
 	if (host->devmode != 0) return;
 
 	// Precache our sounds:
@@ -52,7 +52,7 @@ void init() {
 	host->sndSetVolume(SOUNDCHANNEL_PLAYER, SDL_MIX_MAXVOLUME / 2);
 	host->sndSetVolume(SOUNDCHANNEL_PAIN, SDL_MIX_MAXVOLUME / 2);
 	host->sndSetVolume(SOUNDCHANNEL_MONSTERS, SDL_MIX_MAXVOLUME / 2);
-	
+
 	// Fix Jason to be indoor Jason:
 	for (i=0; i<=(*host->last_entity); ++i) if (host->entities[i] != NULL) {
 		if (host->entities[i]->class == CLASS_JASON) {
@@ -75,7 +75,8 @@ void pre_render() {
 		for (x = 0; x <= (*(host->screen_w) / 32.0);++x) {
 			tx = (x * 32.0 + *(host->screen_mx));
 			m = host->gettileat(host->wrap_map_coord_x(tx), host->wrap_map_coord_y(ty));
-			if (!(host->map->mapflags[m] & MAPFLAG_JASON))
+			if ( !(((host->map->mapflags[m] & MAPFLAG_JASON)) &&
+			       ((host->map->mapflags[m] & MAPFLAG_HARMFUL) == 0)) )
 				host->Draw2x2BGTile((x * 32.0) - xofs, (y * 32.0) - yofs, m, 0);
 		}
 	}
@@ -97,11 +98,12 @@ void post_render() {
 		for (x = 0; x <= (*(host->screen_w) / 32.0);++x) {
 			tx = (x * 32.0 + *(host->old_screen_mx));
 			m = host->gettileat(host->wrap_map_coord_x(tx), host->wrap_map_coord_y(ty));
-			if (host->map->mapflags[m] & MAPFLAG_JASON)
+			if ( ((host->map->mapflags[m] & MAPFLAG_JASON)) &&
+				 ((host->map->mapflags[m] & MAPFLAG_HARMFUL) == 0) )
 				host->Draw2x2BGTile((x * 32.0) - xofs, (y * 32.0) - yofs, m, 0);
 		}
 	}
-	
+
 	// Draw the HUD:
 	tank = (e_tank *)((*player)->owner);
 	if (tank != NULL) {
@@ -116,7 +118,7 @@ void post_render() {
 		host->put_sprite(32, 160, 5, 0x47);
 		host->put_sprite(32, 176, 5, 0x57);
 	}
-		
+
 	// Put the POW meter in:
 	for (i = 3; i >= 0; --i)
 		if ((*player)->health >= (i << 6) + 63)

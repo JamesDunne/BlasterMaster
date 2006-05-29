@@ -202,7 +202,7 @@ void Jason_HandleClimbing(entity e, unsigned char m) {
 }
 
 void Jason_DoWarp(entity e) {
-	DEFINE_SELF(e_tank);
+	DEFINE_SELF(e_jason);
 	int	i, j;
 	int	same = 0;
 	char	*filename;
@@ -261,6 +261,8 @@ void Jason_DoWarp(entity e) {
 				break;
 			}
 	}
+
+	self->warp_downtime = 128;
 }
 
 void Jason_Warp(entity e) {
