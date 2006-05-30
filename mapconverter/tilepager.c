@@ -334,11 +334,29 @@ int LoadROM(char *fname) {
 
 // Map stuff:
 
-void Uncompress2x2(Uint8 *tmap, int tx, int ty, Uint8 t) {
+void Uncompress2x2offby2(Uint8 *tmap, int tx, int ty, Uint8 t) {
 	tx -= 2;
 	ty -= 2;
 	if (tx < 0) tx += map.width;
 	if (ty < 0) ty += map.width;
+	tmap[(ty << 7) | tx] = t;
+}
+
+void Uncompress4x4offby2(Uint8 *tmap, int tx, int ty, Uint8 t) {
+	Uncompress2x2offby2(tmap, tx  , ty  , map4x4[(t << 2)+0]);
+	Uncompress2x2offby2(tmap, tx+1, ty  , map4x4[(t << 2)+1]);
+	Uncompress2x2offby2(tmap, tx  , ty+1, map4x4[(t << 2)+2]);
+	Uncompress2x2offby2(tmap, tx+1, ty+1, map4x4[(t << 2)+3]);
+};
+
+void Uncompress8x8offby2(Uint8 *tmap, int tx, int ty, Uint8 t) {
+	Uncompress4x4offby2(tmap, tx  , ty  , map8x8[(t << 2)+0]);
+	Uncompress4x4offby2(tmap, tx+2, ty  , map8x8[(t << 2)+1]);
+	Uncompress4x4offby2(tmap, tx  , ty+2, map8x8[(t << 2)+2]);
+	Uncompress4x4offby2(tmap, tx+2, ty+2, map8x8[(t << 2)+3]);
+};
+
+void Uncompress2x2(Uint8 *tmap, int tx, int ty, Uint8 t) {
 	tmap[(ty << 7) | tx] = t;
 }
 
@@ -501,9 +519,17 @@ void ConvertMap(int l, int n, int numtex) {
 	map.map_loaded = 1;
 
 	// Draw the map out from the "compressed" data:
-	for (y=0;y<map.height >> 2;++y) {
-		for (x=0;x<map.width >> 2;++x) {
-			Uncompress8x8(map.map, x << 2, y << 2, map32x32[(y << 5) | x]);
+	if (l < 8) {
+		for (y=0;y<map.height >> 2;++y) {
+			for (x=0;x<map.width >> 2;++x) {
+				Uncompress8x8offby2(map.map, x << 2, y << 2, map32x32[(y << 5) | x]);
+			}
+		}
+	} else {
+		for (y=0;y<map.height >> 2;++y) {
+			for (x=0;x<map.width >> 2;++x) {
+				Uncompress8x8(map.map, x << 2, y << 2, map32x32[(y << 5) | x]);
+			}
 		}
 	}
 
@@ -526,8 +552,13 @@ void ConvertMap(int l, int n, int numtex) {
 		if (gateways[i].levela == revlev) {
 			int	lb = ((gateways[i].levelb + 8) % 16);
 			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
-			map.doors[m]->x = wrap_x(gateways[i].xa - 2);
-			map.doors[m]->y = wrap_y(gateways[i].ya - 2);
+			if (l < 8) {
+				map.doors[m]->x = wrap_x(gateways[i].xa - 2);
+				map.doors[m]->y = wrap_y(gateways[i].ya - 2);
+			} else {
+				map.doors[m]->x = gateways[i].xa;
+				map.doors[m]->y = gateways[i].ya;
+			}
 			map.doors[m]->tag = i+1;
 			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
 			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
@@ -540,8 +571,13 @@ void ConvertMap(int l, int n, int numtex) {
 		if (gateways[i].levelb == revlev) {
 			int	la = ((gateways[i].levela + 8) % 16);
 			map.doors[m] = calloc(sizeof(mapdoor_t), 1);
-			map.doors[m]->x = wrap_x(gateways[i].xb - 2);
-			map.doors[m]->y = wrap_y(gateways[i].yb - 2);
+			if (l < 8) {
+				map.doors[m]->x = wrap_x(gateways[i].xb - 2);
+				map.doors[m]->y = wrap_y(gateways[i].yb - 2);
+			} else {
+				map.doors[m]->x = gateways[i].xb;
+				map.doors[m]->y = gateways[i].yb;
+			}
 			map.doors[m]->tag = i+1;
 			map.doors[m]->targetmap = calloc(strlen("maps/map0X.bma") + 1, 1);
 			strcpy(map.doors[m]->targetmap, "maps/map0X.bma");
@@ -671,10 +707,17 @@ void ConvertMap(int l, int n, int numtex) {
 					map.num_regions++;
 					map.regions = realloc(map.regions, sizeof(mapregion_t *) * map.num_regions);
 					map.regions[map.num_regions - 1] = calloc(sizeof(mapregion_t), 1);
-					map.regions[map.num_regions - 1]->lx = lx*16;
-					map.regions[map.num_regions - 1]->ty = ty*16;
-					map.regions[map.num_regions - 1]->rx = rx*16+15;
-					map.regions[map.num_regions - 1]->by = by*16+15;
+					if (l < 8) {
+						map.regions[map.num_regions - 1]->lx = lx*16;
+						map.regions[map.num_regions - 1]->ty = ty*16;
+						map.regions[map.num_regions - 1]->rx = rx*16+15;
+						map.regions[map.num_regions - 1]->by = by*16+15;
+					} else {
+						map.regions[map.num_regions - 1]->lx = wrap_x(lx*16+2);
+						map.regions[map.num_regions - 1]->ty = ty*16;
+						map.regions[map.num_regions - 1]->rx = wrap_x(rx*16+15+2);
+						map.regions[map.num_regions - 1]->by = by*16+15;
+					}
 					printf("{%d, %d} to {%d, %d}\n",
 						map.regions[map.num_regions - 1]->lx,
 						map.regions[map.num_regions - 1]->ty,
@@ -707,8 +750,13 @@ void ConvertMap(int l, int n, int numtex) {
 	for (i=0; i<numetys; ++i) {
 		map.entities[i+extra] = calloc(sizeof(mapentity_t), 1);
 		map.entities[i+extra]->class = etyclass[i];
-		map.entities[i+extra]->x = wrap_x(etyx[i] - 2) << 5;
-		map.entities[i+extra]->y = wrap_x(etyy[i] - 2) << 5;
+		if (l < 8) {
+			map.entities[i+extra]->x = wrap_x(etyx[i] - 2) << 5;
+			map.entities[i+extra]->y = wrap_x(etyy[i] - 2) << 5;
+		} else {
+			map.entities[i+extra]->x = etyx[i] << 5;
+			map.entities[i+extra]->y = etyy[i] << 5;
+		}
 #if 0
 		if (etyclass[i] == 0xFF) {
 			fprintf(stderr, "Marker data: 0x%02X, 0x%02X\n", etyx[i], etyy[i]);
