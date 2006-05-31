@@ -16,7 +16,7 @@ entity	e_spawn(class_type class) {
 	// Hasn't been designed yet?
 	if (class_properties[class] == NULL) return NULL;
 
-	for (i=0;i<MAX_ENTITIES;++i)
+	for (i=0;i<MAX_ENTITIES;++i) {
 		if (entities[i] == NULL) {
 			if (i > last_entity) last_entity = i;
 			entities[i] = malloc(sizeof(entity_t));
@@ -30,6 +30,7 @@ entity	e_spawn(class_type class) {
 			call_process_func(entities[i], init);
 			return entities[i];
 		}
+	}
 
 	return NULL;
 }
