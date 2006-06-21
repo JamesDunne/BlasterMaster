@@ -397,7 +397,7 @@ void bounds_check(entity self) {
 
 	m = gettileat(ex, ey);
 	if (map.mapflags[m] & MAPFLAG_WATER) {
-		if (self->dy > 4) self->dy = 4;
+		if (self->dy > 3) self->dy = 3;
 		if (self->dy < -8) self->dy = -8;
 	} else {
 		if (self->dy > 15) self->dy = 15;
@@ -493,7 +493,7 @@ void process_entities() {
 				// Apply momentum:
 				m = map.mapflags[gettileat(e->x, e->y)];
 				if ((m & MAPFLAG_WATER) && !(m & MAPFLAG_SOLID)) {
-					e->x = wrap_map_coord_x(e->x + (e->dx * 0.5) * time_dt);
+					e->x = wrap_map_coord_x(e->x + (e->dx * 0.35) * time_dt);
 					e->y = wrap_map_coord_y(e->y + (e->dy * 0.5) * time_dt);
 				} else {
 					e->x = wrap_map_coord_x(e->x + e->dx * time_dt);
@@ -535,7 +535,7 @@ void process_entities() {
 			// Apply momentum:
 			m = map.mapflags[gettileat(e->x, e->y)];
 			if ((m & MAPFLAG_WATER) && !(m & MAPFLAG_SOLID)) {
-				e->x = wrap_map_coord_x(e->x + (e->dx * 0.5));
+				e->x = wrap_map_coord_x(e->x + (e->dx * 0.35z));
 				e->y = wrap_map_coord_y(e->y + (e->dy * 0.5));
 			} else {
 				e->x = wrap_map_coord_x(e->x + e->dx);

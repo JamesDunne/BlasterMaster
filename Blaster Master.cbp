@@ -20,6 +20,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Dmain=SDL_main"/>
+			<Add directory="common"/>
 		</Compiler>
 		<Linker>
 			<Add library="mingw32"/>
