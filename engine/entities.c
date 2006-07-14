@@ -535,7 +535,7 @@ void process_entities() {
 			// Apply momentum:
 			m = map.mapflags[gettileat(e->x, e->y)];
 			if ((m & MAPFLAG_WATER) && !(m & MAPFLAG_SOLID)) {
-				e->x = wrap_map_coord_x(e->x + (e->dx * 0.35z));
+				e->x = wrap_map_coord_x(e->x + (e->dx * 0.35));
 				e->y = wrap_map_coord_y(e->y + (e->dy * 0.5));
 			} else {
 				e->x = wrap_map_coord_x(e->x + e->dx);
