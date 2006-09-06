@@ -1,4 +1,5 @@
 #!/bin/sh
+echo test poop
 cd bmgame
 make
 cd ../engine
