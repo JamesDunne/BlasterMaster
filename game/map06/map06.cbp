@@ -1,51 +1,54 @@
-<?xml version="1.0"?>
-<!DOCTYPE CodeBlocks_project_file>
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_project_file>
-	<FileVersion major="1" minor="1"/>
+	<FileVersion major="1" minor="5" />
 	<Project>
-		<Option title="map06"/>
-		<Option makefile="Makefile"/>
-		<Option makefile_is_custom="0"/>
-		<Option compiler="0"/>
+		<Option title="map06" />
+		<Option pch_mode="0" />
+		<Option default_target="" />
+		<Option compiler="gcc" />
+		<Option virtualFolders="" />
 		<Build>
 			<Target title="default">
-				<Option output="..\map06.dll"/>
-				<Option working_dir="."/>
-				<Option object_output=".objs"/>
-				<Option deps_output=".deps"/>
-				<Option type="3"/>
-				<Option compiler="0"/>
-				<Option createStaticLib="1"/>
+				<Option output="..\map06.dll" prefix_auto="0" extension_auto="0" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createStaticLib="1" />
 				<Compiler>
-					<Add directory="..\common"/>
+					<Add directory="..\common" />
 				</Compiler>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="default;" />
+		</VirtualTargets>
 		<Compiler>
-			<Add option="-DBUILD_DLL"/>
+			<Add option="-DBUILD_DLL" />
 		</Compiler>
 		<Linker>
-			<Add library="opengl32"/>
+			<Add library="opengl32" />
 		</Linker>
 		<Unit filename="bm_game.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
+			<Option compilerVar="CC" />
+			<Option target="default" />
 		</Unit>
 		<Unit filename="interface.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
+			<Option compilerVar="CC" />
+			<Option target="default" />
 		</Unit>
 		<Unit filename="interface.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
+			<Option compilerVar="" />
+			<Option compile="0" />
+			<Option link="0" />
+			<Option target="default" />
 		</Unit>
 		<Unit filename="sounds.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
+			<Option compilerVar="" />
+			<Option compile="0" />
+			<Option link="0" />
+			<Option target="default" />
 		</Unit>
+		<Extensions>
+			<code_completion />
+		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
